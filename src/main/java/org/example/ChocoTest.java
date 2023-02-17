@@ -13,7 +13,8 @@ public class ChocoTest {
         IntVar[] b2 = model.intVarArray("b2", 8, 0, 1);
         IntVar[] b3 = model.intVarArray("b3", 8, 0, 1);
 
-        String op = "="; // among ">=", ">", "<=", "<", "=" and "!="
+        String op = "="; // among ">=", ">", "<=", "<", "="
+        // and "!="
         IntVar[] vectorMul1 = new IntVar[8];
         IntVar[] vectorMul2 = new IntVar[8];
         IntVar[] vectorMul3 = new IntVar[8];
