@@ -18,7 +18,7 @@ import static org.chocosolver.util.tools.MathUtils.pow;
 
 
 public class equationSolver {
-    private static String inputPath = "D:\\eclipse-workspace\\multiStirngMatching\\conf\\input";
+    private static final String inputPath = "D:\\eclipse-workspace\\multiStirngMatching\\conf\\input";
 
     public static void main(String[] args) {
         List<String> eachLine = getEachLine(inputPath);
@@ -39,7 +39,21 @@ public class equationSolver {
             }
             if (likeTypes.size() != 0) {
                 //todo
+                int[] typeNum = {0, 0, 0};
+                for (likeType likeType : likeTypes) {
+                    if (likeType.isFrontMatch()) {
+                        typeNum[0]++;
+                    }
+                    if (likeType.isMiddleMatch()) {
+                        typeNum[1]++;
+                    }
+                    if (likeType.isBehindMatch()) {
+                        typeNum[2]++;
+                    }
+                }
+                //n += getMax(typeNum);
             }
+            System.out.println(n);
 
             //构造in类型的方程
             Model model = new Model();
@@ -101,7 +115,7 @@ public class equationSolver {
     public static List<String> getEachLine(String intputPath) {
         File file = new File(intputPath);
         List<String> eachLine = new ArrayList<>();
-        try (BufferedReader bufferedReader = new BufferedReader(new FileReader(file));) {
+        try (BufferedReader bufferedReader = new BufferedReader(new FileReader(file))) {
             eachLine = bufferedReader.lines().collect(Collectors.toList());
         } catch (IOException e) {
             e.printStackTrace();
@@ -111,17 +125,44 @@ public class equationSolver {
 
     public static void getInTypeAndLikeType(List<inType> inTypes, List<likeType> likeTypes, List<String> eachLine) {
         for (String line : eachLine) {
-            List<String> allParas = getAllParas(line);
             String probability = getProbability(line);
             if (line.contains("in") || line.contains("IN")) {
+                List<String> allParas = getAllParas(line);
                 inType currentInType = new inType(allParas.size(), probability);
                 inTypes.add(currentInType);
             } else if (line.contains("like") || line.contains("LIKE")) {
-                //todo
+                boolean[] booleans = getMatchPosition(line);
+                likeType currentLikeType = new likeType(booleans[0], booleans[1], booleans[2], probability);
+                likeTypes.add(currentLikeType);
             } else {
                 throw new UnsupportedOperationException();
             }
         }
+    }
+
+    public static boolean[] getMatchPosition(String line) {
+        boolean[] matchPosition = {false, false, false};
+        int likePosition = line.indexOf("like");
+        if (likePosition == -1) {
+            likePosition = line.indexOf("LIKE");
+        }
+        int equalPosition = line.lastIndexOf("=");
+        String likeMatch = line.substring(likePosition + 4, equalPosition).trim();
+        int currentPosition = likeMatch.indexOf('%');
+        while (currentPosition != -1) {
+            if (currentPosition == 0) {
+                matchPosition[0] = true;
+            } else if (currentPosition < likeMatch.length() - 1) {
+                matchPosition[1] = true;
+            } else if (currentPosition == likeMatch.length() - 1) {
+                matchPosition[2] = true;
+                break;
+            } else {
+                throw new UnsupportedOperationException();
+            }
+            currentPosition = likeMatch.indexOf("%", currentPosition + 1);
+        }
+        return matchPosition;
     }
 
     public static List<String> getAllParas(String line) {
@@ -151,5 +192,15 @@ public class equationSolver {
             currentIndex = line.indexOf("=", currentIndex + 1);
         }
         return line.substring(index + 1).trim();
+    }
+
+    public static int getMax(int[] arr) {
+        int max = arr[0];
+        for (int i = 1; i < arr.length; i++) {
+            if (max < arr[i]) {
+                max = arr[i];
+            }
+        }
+        return max;
     }
 }

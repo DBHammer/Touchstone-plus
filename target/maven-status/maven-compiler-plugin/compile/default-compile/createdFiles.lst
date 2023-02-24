@@ -1,1 +1,6 @@
 org\example\ChocoTest.class
+org\example\dbconnector\DbConnector.class
+org\example\solver\inType.class
+org\example\dbconnector\DatabaseConnectorConfig.class
+org\example\solver\equationSolver.class
+org\example\solver\likeType.class
