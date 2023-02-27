@@ -17,30 +17,30 @@ import org.chocosolver.solver.variables.IntVar;
 import static org.chocosolver.util.tools.MathUtils.pow;
 
 
-public class equationSolver {
+public class EquationSolver {
     private static final String inputPath = "D:\\eclipse-workspace\\multiStirngMatching\\conf\\input";
 
     public static void main(String[] args) {
         List<String> eachLine = getEachLine(inputPath);
-        List<inType> inTypes = new ArrayList<>();
-        List<likeType> likeTypes = new ArrayList<>();
-        getInTypeAndLikeType(inTypes, likeTypes, eachLine);
-        solve(inTypes, likeTypes);
+        List<InType> InTypes = new ArrayList<>();
+        List<LikeType> LikeTypes = new ArrayList<>();
+        getInTypeAndLikeType(InTypes, LikeTypes, eachLine);
+        solve(InTypes, LikeTypes);
     }
 
-    public static void solve(List<inType> inTypes, List<likeType> likeTypes) {
-        if (inTypes.size() != 0 || likeTypes.size() != 0) {
+    public static void solve(List<InType> InTypes, List<LikeType> LikeTypes) {
+        if (InTypes.size() != 0 || LikeTypes.size() != 0) {
             //求方程个数
             int n = 0;
-            if (inTypes.size() != 0) {
-                for (inType currentInType : inTypes) {
+            if (InTypes.size() != 0) {
+                for (InType currentInType : InTypes) {
                     n += currentInType.paraNum;
                 }
             }
-            if (likeTypes.size() != 0) {
+            if (LikeTypes.size() != 0) {
                 //todo
                 int[] typeNum = {0, 0, 0};
-                for (likeType likeType : likeTypes) {
+                for (LikeType likeType : LikeTypes) {
                     if (likeType.isFrontMatch()) {
                         typeNum[0]++;
                     }
@@ -57,9 +57,9 @@ public class equationSolver {
 
             //构造in类型的方程
             Model model = new Model();
-            int len = getMaxPercentage(inTypes);
+            int len = getMaxPercentage(InTypes);
             List<IntVar[]> allEquation = new ArrayList<>();
-            for (int i = 0; i < inTypes.size() + 1; i++) {
+            for (int i = 0; i < InTypes.size() + 1; i++) {
                 int max;
                 if (i == 0) {
                     max = pow(10, len);
@@ -71,22 +71,22 @@ public class equationSolver {
             }
             String op = "="; // among ">=", ">", "<=", "<", "="
             List<IntVar[]> vectorMuls = new ArrayList<>();
-            for (int i = 0; i < inTypes.size(); i++) {
+            for (int i = 0; i < InTypes.size(); i++) {
                 IntVar[] vectorMul = new IntVar[n];
                 vectorMuls.add(vectorMul);
             }
-            for (int i = 0; i < inTypes.size(); i++) {
+            for (int i = 0; i < InTypes.size(); i++) {
                 for (int j = 0; j < n; j++) {
                     vectorMuls.get(i)[j] = allEquation.get(0)[j].mul(allEquation.get(i + 1)[j]).intVar();
                 }
             }
             model.sum(allEquation.get(0), "<=", pow(10, len)).post();
-            for (int i = 0; i < inTypes.size(); i++) {
-                String strPercentage = inTypes.get(i).getPercentage();
+            for (int i = 0; i < InTypes.size(); i++) {
+                String strPercentage = InTypes.get(i).getPercentage();
                 int percentage = (int) (Double.parseDouble(strPercentage) * pow(10, len));
                 model.sum(vectorMuls.get(i), "=", percentage).post();
                 //System.out.println(inTypes.get(i).getParaNum());
-                model.sum(allEquation.get(i + 1), "=", inTypes.get(i).getParaNum()).post();
+                model.sum(allEquation.get(i + 1), "=", InTypes.get(i).getParaNum()).post();
             }
             Solver solver = model.getSolver();
             if (solver.solve()) {
@@ -97,9 +97,9 @@ public class equationSolver {
         }
     }
 
-    public static int getMaxPercentage(List<inType> inTypes) {
+    public static int getMaxPercentage(List<InType> InTypes) {
         int len = 0;
-        for (inType eachInType : inTypes) {
+        for (InType eachInType : InTypes) {
             int num = eachInType.getPercentage().length();
             if (num > len) {
                 len = num;
@@ -123,17 +123,17 @@ public class equationSolver {
         return eachLine;
     }
 
-    public static void getInTypeAndLikeType(List<inType> inTypes, List<likeType> likeTypes, List<String> eachLine) {
+    public static void getInTypeAndLikeType(List<InType> InTypes, List<LikeType> LikeTypes, List<String> eachLine) {
         for (String line : eachLine) {
             String probability = getProbability(line);
             if (line.contains("in") || line.contains("IN")) {
                 List<String> allParas = getAllParas(line);
-                inType currentInType = new inType(allParas.size(), probability);
-                inTypes.add(currentInType);
+                InType currentInType = new InType(allParas.size(), probability);
+                InTypes.add(currentInType);
             } else if (line.contains("like") || line.contains("LIKE")) {
                 boolean[] booleans = getMatchPosition(line);
-                likeType currentLikeType = new likeType(booleans[0], booleans[1], booleans[2], probability);
-                likeTypes.add(currentLikeType);
+                LikeType currentLikeType = new LikeType(booleans[0], booleans[1], booleans[2], probability);
+                LikeTypes.add(currentLikeType);
             } else {
                 throw new UnsupportedOperationException();
             }

@@ -39,11 +39,11 @@ public abstract class DbConnector {
 
     protected abstract int[] getSqlInfoColumns();
 
-    public List<String> getAllDistinctString(String colName,String tableName) throws SQLException {
+    public List<String> getAllDistinctString(String colName, String tableName) throws SQLException {
         try (Statement stmt = conn.createStatement()) {
-            ResultSet rs = stmt.executeQuery(String.format("select distinct %s from %s", colName, tableName));
+            ResultSet rs = stmt.executeQuery(String.format("select distinct %s from %s where %s is not null", colName, tableName, colName));
             List<String> infos = new ArrayList<>();
-            while(rs.next()){
+            while (rs.next()) {
                 infos.add(rs.getString(1));
             }
             return infos;

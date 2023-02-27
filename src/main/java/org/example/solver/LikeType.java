@@ -1,6 +1,6 @@
 package org.example.solver;
 
-public class likeType {
+public class LikeType {
 
     public boolean frontMatch;
 
@@ -10,7 +10,7 @@ public class likeType {
 
     public String percentage;
 
-    public likeType(boolean frontMatch, boolean middleMatch, boolean behindMatch, String percentage) {
+    public LikeType(boolean frontMatch, boolean middleMatch, boolean behindMatch, String percentage) {
         this.frontMatch = frontMatch;
         this.middleMatch = middleMatch;
         this.behindMatch = behindMatch;
