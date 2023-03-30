@@ -2,11 +2,11 @@ package org.example.solver;
 
 public class InType {
     public int paraNum;
-    public String percentage;
+    public String rows;
 
-    public InType(int paraNum, String percentage) {
+    public InType(int paraNum, String rows) {
         this.paraNum = paraNum;
-        this.percentage = percentage;
+        this.rows = rows;
     }
 
     public int getParaNum() {
@@ -17,12 +17,12 @@ public class InType {
         this.paraNum = paraNum;
     }
 
-    public String getPercentage() {
-        return percentage;
+    public String getRows() {
+        return rows;
     }
 
-    public void setPercentage(String percentage) {
-        this.percentage = percentage;
+    public void setRows(String percentage) {
+        this.rows = percentage;
     }
 
 }

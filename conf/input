@@ -1,4 +1,3 @@
-col1 in (a1, a2, a3, a4) = 0.6
-col1 in (b1, b2, b3) = 0.5
-col1 in (c1, c2, c3, c4, c5) = 0.7
-col1 LIKE %46464a4646 = 0.1
+col1 in ('a1', 'a2', 'a3', 'a4') = 0.6
+col1 in ('b1', 'b2', 'b3') = 0.5
+col1 in ('c1', 'c2', 'c3', 'c4', 'c5') = 0.7

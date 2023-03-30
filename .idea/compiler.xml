@@ -6,8 +6,23 @@
         <sourceOutputDir name="target/generated-sources/annotations" />
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
+      </profile>
+      <profile name="Annotation profile for multiStirngMatching" enabled="true">
+        <sourceOutputDir name="target/generated-sources/annotations" />
+        <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
+        <outputRelativeToContentRoot value="true" />
+        <option name="project" value="org.example/multiStirngMatching" />
+        <processorPath useClasspath="false">
+          <entry name="$MAVEN_REPOSITORY$/info/picocli/picocli-codegen/4.5.1/picocli-codegen-4.5.1.jar" />
+          <entry name="$MAVEN_REPOSITORY$/info/picocli/picocli/4.5.1/picocli-4.5.1.jar" />
+        </processorPath>
         <module name="multiStirngMatching" />
       </profile>
     </annotationProcessing>
+  </component>
+  <component name="JavacSettings">
+    <option name="ADDITIONAL_OPTIONS_OVERRIDE">
+      <module name="multiStirngMatching" options="-Aproject=org.example/multiStirngMatching" />
+    </option>
   </component>
 </project>

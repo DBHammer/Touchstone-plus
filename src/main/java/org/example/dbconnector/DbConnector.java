@@ -68,4 +68,16 @@ public abstract class DbConnector {
             throw new SQLException(String.format("table'%s'的size为0", tableName));
         }
     }
+
+    public long getNullRow(String tableName, String columnName) throws SQLException {
+        try (Statement stmt = conn.createStatement()) {
+            String countQuery = String.format("select count(*) from %s where %s is null", tableName, columnName);
+            ResultSet rs = stmt.executeQuery(countQuery);
+            if (rs.next()) {
+                return rs.getInt(1);
+            } else {
+                throw new SQLException();
+            }
+        }
+    }
 }

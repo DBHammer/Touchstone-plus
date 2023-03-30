@@ -1,0 +1,13 @@
+{
+  "databaseConnectorConfig": {
+    "databaseIp": "biui.me",
+    "databaseName": "likecolumn",
+    "databasePort": "5432",
+    "databasePwd": "Biui1227..",
+    "databaseUser": "postgres"
+  },
+  "inputDirectory": "conf/inputLikeTest.txt",
+  "outputDirectory": "conf/output.txt",
+  "newsqlDirectory": "conf/newSql.txt",
+  "dataDirectory": "conf/data.txt"
+}

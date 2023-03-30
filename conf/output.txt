@@ -1,0 +1,24 @@
+t1.col
+tableSize: 1000
+nullRows: 0
+liketype: behind 43
+liketype: behind 195
+liketype: behind 198
+liketype: behind 38
+liketype: behind 212
+liketype: behind 192
+liketype: behind 41
+liketype: behind 35
+liketype: behind 38
+liketype: behind 29
+152 38 35 87 212 43 41 29 160 38 
+0 0 0 0 0 1 0 0 0 0 
+1 0 0 0 0 1 0 0 0 0 
+0 1 0 0 0 0 0 0 1 0 
+0 1 0 0 0 0 0 0 0 0 
+0 0 0 0 1 0 0 0 0 0 
+0 0 1 1 0 0 1 1 0 0 
+0 0 0 0 0 0 1 0 0 0 
+0 0 1 0 0 0 0 0 0 0 
+0 0 0 0 0 0 0 0 0 1 
+0 0 0 0 0 0 0 1 0 0 

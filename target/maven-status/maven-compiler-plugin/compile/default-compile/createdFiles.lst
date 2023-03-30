@@ -1,6 +1,9 @@
-org\example\ChocoTest.class
+org\example\solver\LikeType.class
+org\example\solver\InType.class
 org\example\dbconnector\DbConnector.class
-org\example\solver\inType.class
+org\example\solver\EquationSolver.class
+META-INF\native-image\picocli-generated\org.example\multiStirngMatching\reflect-config.json
+org\example\ChocoTest.class
+META-INF\native-image\picocli-generated\org.example\multiStirngMatching\resource-config.json
 org\example\dbconnector\DatabaseConnectorConfig.class
-org\example\solver\equationSolver.class
-org\example\solver\likeType.class
+META-INF\native-image\picocli-generated\org.example\multiStirngMatching\proxy-config.json

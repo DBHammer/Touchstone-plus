@@ -8,13 +8,13 @@ public class LikeType {
 
     public boolean behindMatch;
 
-    public String percentage;
+    public String rows;
 
-    public LikeType(boolean frontMatch, boolean middleMatch, boolean behindMatch, String percentage) {
+    public LikeType(boolean frontMatch, boolean middleMatch, boolean behindMatch, String rows) {
         this.frontMatch = frontMatch;
         this.middleMatch = middleMatch;
         this.behindMatch = behindMatch;
-        this.percentage = percentage;
+        this.rows = rows;
     }
 
     public boolean isFrontMatch() {
@@ -41,11 +41,11 @@ public class LikeType {
         this.behindMatch = behindMatch;
     }
 
-    public String getPercentage() {
-        return percentage;
+    public String getRows() {
+        return rows;
     }
 
-    public void setPercentage(String percentage) {
-        this.percentage = percentage;
+    public void setRows(String percentage) {
+        this.rows = percentage;
     }
 }

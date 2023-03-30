@@ -1,0 +1,10 @@
+t1.col like 'aa%' = 43
+t1.col like 'a%' = 195
+t1.col like 'b%' = 198
+t1.col like 'be%' = 38
+t1.col like 'd%' = 212
+t1.col like 'e%' = 192
+t1.col like 'ea%' = 41
+t1.col like 'eb%' = 35
+t1.col like 'cb%' = 38
+t1.col like 'ed%' = 29

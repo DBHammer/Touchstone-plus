@@ -15,6 +15,9 @@ public class DatabaseConnectorConfig {
         this.databaseName = databaseName;
     }
 
+    public DatabaseConnectorConfig() {
+    }
+
     public String getDatabaseIp() {
         return databaseIp;
     }
