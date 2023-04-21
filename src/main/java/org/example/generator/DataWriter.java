@@ -1,103 +1,66 @@
 package org.example.generator;
 
-import org.example.dbconnector.DbConnector;
-import org.example.dbconnector.adapter.PgConnector;
-import org.example.utils.CommonUtils;
-import org.example.utils.TaskConfigurator;
+import org.example.solver.TopoGraph;
 import org.example.utils.exception.MainException;
 
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.math.BigDecimal;
-import java.math.RoundingMode;
-import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.List;
-
-import static org.chocosolver.util.tools.MathUtils.pow;
-import static org.example.utils.CommonUtils.MAPPER;
+import java.util.Queue;
+import java.util.Random;
 
 public class DataWriter {
-    private String[] strs;
+    private String[] allParaValues;
     private long[] paraRows;
-    private List<long[]> isPresent;
-    private String tableName;
-    private String colName;
     private long nullRows;
     private String dataPath;
     private long tableSize;
+    private String otherStr;
 
-    public void generateData() throws IOException {
+    public void generateData() throws IOException, MainException {
+        if (paraRows.length != allParaValues.length) {
+            throw new MainException("参数数量不一致");
+        }
         FileWriter fw = new FileWriter(new File(dataPath));
         BufferedWriter bw = new BufferedWriter(fw);
-        //bw.write(colName + "\n");
-        for (int i = 0; i < nullRows; i++) {
+        long currentRow = nullRows;
+        for (long i = 0; i < nullRows; i++) {
             bw.write("\\N" + System.lineSeparator());
         }
-        int num = strs.length;
-        String otherStr = "";
-        long currentRow = nullRows;
-        for (int i = 0; i < num; i++) {
-            boolean haveOnePresent = false;
-            for (long[] ints : isPresent) {
-                if (ints[i] == 1) {
-                    haveOnePresent = true;
-                }
+        for (int i = 0; i < paraRows.length; i++) {
+            String str = allParaValues[i];
+            for (long j = 0; j < paraRows[i]; j++) {
+                bw.write(str + System.lineSeparator());
             }
-            if (haveOnePresent) {
-                long row = paraRows[i];
-                System.out.println(row);
-                for (int j = 0; j < row; j++) {
-                    bw.write(strs[i] + System.lineSeparator());
-                }
-                currentRow += row;
-            } else {
-                otherStr = strs[i];
-            }
+            currentRow += paraRows[i];
         }
-        for (long i = 0; i < tableSize - currentRow; i++) {
-            bw.write(otherStr + System.lineSeparator());
+        if (currentRow < tableSize) {
+            for (long i = 0; i < tableSize - currentRow; i++) {
+                bw.write(otherStr + System.lineSeparator());
+            }
         }
         bw.close();
         fw.close();
     }
 
-
-    public DataWriter(String[] strs, long[] paraProbability, List<long[]> isPresent,
-                      String tableName, String colName, long nullRows, String dataPath, long tableSize) {
-        this.strs = strs;
-        this.paraRows = paraProbability;
-        this.isPresent = isPresent;
-        this.tableName = tableName;
-        this.colName = colName;
+    public DataWriter(String[] allParaValues, long[] paraRows, long nullRows, String dataPath, long tableSize, String otherStr) {
+        this.allParaValues = allParaValues;
+        this.paraRows = paraRows;
         this.nullRows = nullRows;
         this.dataPath = dataPath;
         this.tableSize = tableSize;
+        this.otherStr = otherStr;
     }
 
-    public long getNullRows() {
-        return nullRows;
+    public String[] getAllParaValues() {
+        return allParaValues;
     }
 
-    public void setNullRows(BigDecimal nullPercentage) {
-        this.nullRows = nullRows;
-    }
-
-    public String getTableName() {
-        return tableName;
-    }
-
-    public void setTableName(String tableName) {
-        this.tableName = tableName;
-    }
-
-    public String[] getStrs() {
-        return strs;
-    }
-
-    public void setStrs(String[] strs) {
-        this.strs = strs;
+    public void setAllParaValues(String[] allParaValues) {
+        this.allParaValues = allParaValues;
     }
 
     public long[] getParaRows() {
@@ -108,19 +71,35 @@ public class DataWriter {
         this.paraRows = paraRows;
     }
 
-    public List<long[]> getIsPresent() {
-        return isPresent;
+    public long getNullRows() {
+        return nullRows;
     }
 
-    public void setIsPresent(List<long[]> isPresent) {
-        this.isPresent = isPresent;
+    public void setNullRows(long nullRows) {
+        this.nullRows = nullRows;
     }
 
-    public String getColName() {
-        return colName;
+    public String getDataPath() {
+        return dataPath;
     }
 
-    public void setColName(String colName) {
-        this.colName = colName;
+    public void setDataPath(String dataPath) {
+        this.dataPath = dataPath;
+    }
+
+    public long getTableSize() {
+        return tableSize;
+    }
+
+    public void setTableSize(long tableSize) {
+        this.tableSize = tableSize;
+    }
+
+    public String getOtherStr() {
+        return otherStr;
+    }
+
+    public void setOtherStr(String otherStr) {
+        this.otherStr = otherStr;
     }
 }

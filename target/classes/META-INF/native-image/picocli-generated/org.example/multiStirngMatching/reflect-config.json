@@ -24,7 +24,10 @@
     "allDeclaredMethods" : true,
     "allPublicMethods" : true,
     "fields" : [
-      { "name" : "configPath" }
+      { "name" : "configPath" },
+      { "name" : "error" },
+      { "name" : "groupSize" },
+      { "name" : "nbModels" }
     ]
   },
   {

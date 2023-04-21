@@ -1,9 +1,9 @@
 package org.example.generator;
 
 import org.example.solver.TopoGraph;
+import org.example.utils.exception.MainException;
 
-import java.util.Queue;
-import java.util.Random;
+import java.util.*;
 
 public class LikePatterGenerator {
     TopoGraph topoGraph;
@@ -14,18 +14,19 @@ public class LikePatterGenerator {
 
     public String[] getLikeParas() {
         String[] likeParas = new String[topoGraph.getV()];
+        HashSet<String> distinctLikeParas = new HashSet<>();
         Random random = new Random();
         char[] chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789".toCharArray();
-        int[] inNum = new int[topoGraph.getV()];
-        for (int i = 0; i < topoGraph.getV(); i++) {
-            Queue<Integer> allNextV = topoGraph.adj(i);
-            for (Integer integer : allNextV) {
-                inNum[integer]++;
-            }
-        }
+        //统计入度
+        int[] inNum = getInNum();
         for (int i = 0; i < inNum.length; i++) {
             if (inNum[i] == 0) {
-                likeParas[i] = String.valueOf(chars[random.nextInt(62)]);
+                String likePara = String.valueOf(chars[random.nextInt(62)]);
+                while(distinctLikeParas.contains(likePara)){
+                    likePara = String.valueOf(chars[random.nextInt(62)]);
+                }
+                distinctLikeParas.add(likePara);
+                likeParas[i] = likePara;
                 DFS(topoGraph, likeParas, i, chars);
             }
         }
@@ -42,5 +43,16 @@ public class LikePatterGenerator {
             likeParas[integer] += String.valueOf(chars[random.nextInt(62)]);
             DFS(topoGraph, likeParas, integer, chars);
         }
+    }
+
+    public int[] getInNum() {
+        int[] inNum = new int[topoGraph.getV()];
+        for (int i = 0; i < topoGraph.getV(); i++) {
+            Queue<Integer> allNextV = topoGraph.adj(i);
+            for (Integer integer : allNextV) {
+                inNum[integer]++;
+            }
+        }
+        return inNum;
     }
 }
