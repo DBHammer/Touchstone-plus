@@ -52,9 +52,9 @@ public class testResult {
     }
 
     public static void testAll() throws MainException, SQLException, IOException, ExecutionException, InterruptedException {
-        DatabaseConnectorConfig config1 = new DatabaseConnectorConfig("biui.me", "5432", "postgres", "Biui1227..", "tpcdsonecolumn");
+        DatabaseConnectorConfig config1 = new DatabaseConnectorConfig("biui.me", "5432", "postgres", "Biui1227..", "tpchonecolumn");
         DbConnector dbConnector1 = new PgConnector(config1);
-        DatabaseConnectorConfig config2 = new DatabaseConnectorConfig("biui.me", "5432", "postgres", "Biui1227..", "tpcds");
+        DatabaseConnectorConfig config2 = new DatabaseConnectorConfig("biui.me", "5432", "postgres", "Biui1227..", "tpch1");
         DbConnector dbConnector2 = new PgConnector(config2);
         List<String> sqls = getEachLine(inputPath);
         List<String> sqls2 = getEachLine(originPath);
@@ -65,8 +65,8 @@ public class testResult {
         }
         AtomicInteger sum = new AtomicInteger(0);
         new ForkJoinPool(8).submit(() -> new2Olds.parallelStream().forEach(eachNew2Old -> {
-            String sql = sqlHead2 + eachNew2Old.getA();
-            String sql2 = sqlHead2 + eachNew2Old.getB().split("=")[0].trim();
+            String sql = sqlHead + eachNew2Old.getA();
+            String sql2 = sqlHead + eachNew2Old.getB().split("=")[0].trim();
             double result = 0;
             try {
                 result = dbConnector1.getSqlResult(sql);
@@ -86,13 +86,15 @@ public class testResult {
                 sum.addAndGet((int) (error*100000));
                 if (error <= 0.04) {
                     System.out.println("no but" + error);
+                    //System.out.println("no " + result + " " + result2);
                 } else {
                     System.out.println("shit" + error);
+                    //System.out.println("no " + result + " " + result2);
                 }
             }
 
         })).get();
-        System.out.println((double) sum.get() / 100000/1000);
+        System.out.println((double) sum.get() / 100000/40);
     }
 
     public static List<String> getEachLine(String intputPath) {

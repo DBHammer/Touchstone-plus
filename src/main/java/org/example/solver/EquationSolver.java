@@ -2,7 +2,6 @@ package org.example.solver;
 
 import org.chocosolver.solver.Model;
 import org.chocosolver.solver.ParallelPortfolio;
-import org.chocosolver.solver.Solver;
 import org.chocosolver.solver.variables.IntVar;
 import org.chocosolver.solver.variables.Variable;
 import org.example.dbconnector.DbConnector;
@@ -17,7 +16,6 @@ import java.sql.SQLException;
 import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static org.example.utils.CommonUtils.MAPPER;
 
@@ -47,20 +45,21 @@ public class EquationSolver implements Callable<Integer> {
         List<InType> InTypes = new ArrayList<>();
         List<LikeType> LikeTypes = new ArrayList<>();
         getInTypeAndLikeType(InTypes, LikeTypes, eachLine);
-        HashSet<String> allDistinctParas = getDistinctParas(eachLine);
-        List<String> allParasValueUpperBound = getParaValueUpperBound(eachLine, InTypes, allDistinctParas, getTableSize(dbConnector));
-        double denominator = cutDomainInOneError(allParasValueUpperBound, error);
+        HashSet<String> allDistinctParas = getDistinctParasInIntypes(eachLine);
+        List<String> allInParasValueUpperBound = getInParaValueUpperBound(eachLine, InTypes, allDistinctParas, getTableSize(dbConnector));
+
+        double denominator = cutDomainInOneError(allInParasValueUpperBound, error);
         int allDistinctParaInCol = dbConnector.getAllDistinctString(colName, tableName).size();
         TopoGraph topoGraphs = getTopoGraphs(eachLine);
-        solve(InTypes, LikeTypes, config.getOutputDirectory(), dbConnector, topoGraphs, allParasValueUpperBound, allDistinctParaInCol, denominator);
+        solve(InTypes, LikeTypes, config.getOutputDirectory(), dbConnector, topoGraphs, allInParasValueUpperBound, allDistinctParaInCol, denominator);
         return 0;
     }
 
     public void solve(List<InType> InTypes, List<LikeType> LikeTypes, String outputPath, DbConnector dbConnector,
-                      TopoGraph topoGraph, List<String> allParasValueUpperBound, int allDistinctParaInCol, double denominator) throws IOException, SQLException, MainException {
+                      TopoGraph topoGraph, List<String> allInParasValueUpperBound, int allDistinctParaInCol, double denominator) throws IOException, SQLException, MainException {
         if (InTypes.size() != 0 || LikeTypes.size() != 0) {
             //求方程个数
-            int n = allParasValueUpperBound.size();
+            int n = allInParasValueUpperBound.size();
             if (LikeTypes.size() != 0) {
                 int[] typeNum = {0, 0, 0};
                 for (LikeType likeType : LikeTypes) {
@@ -76,6 +75,7 @@ public class EquationSolver implements Callable<Integer> {
                 }
                 n += getMax(typeNum);
             }
+            List<String> allParasValueUpperBound = getParaValueUpperBound(allInParasValueUpperBound, LikeTypes);
             if (n > allDistinctParaInCol) {
                 n = allDistinctParaInCol;
             }
@@ -128,15 +128,14 @@ public class EquationSolver implements Callable<Integer> {
             if (portfolio.solve()) {
                 System.out.println("time:" + (System.currentTimeMillis() - a));
                 Variable[] vars = portfolio.getBestModel().getVars();
-                int start = 0;
                 FileWriter fw = new FileWriter(new File(outputPath));
                 BufferedWriter bw = new BufferedWriter(fw);
                 bw.write(tableName + "." + colName + System.lineSeparator());
                 bw.write("tableSize: " + dbConnector.getTableSize(tableName) + System.lineSeparator());
                 bw.write("nullRows: " + nullRows + System.lineSeparator());
                 bw.write("denominator: " + denominator + System.lineSeparator());
-                bw.write("groupSize: " + groupSize + System.lineSeparator());
-                bw.write("lastGroupSize: " + lastGroupSize + System.lineSeparator());
+                //bw.write("groupSize: " + groupSize + System.lineSeparator());
+                //bw.write("lastGroupSize: " + lastGroupSize + System.lineSeparator());
                 //todo 对like的输出
                 for (InType inType : InTypes) {
                     String eachInType = "intype: " + inType.getParaNum() + " " + inType.getRows() + System.lineSeparator();
@@ -156,14 +155,32 @@ public class EquationSolver implements Callable<Integer> {
                     String eachLikeType = "liketype: " + likePosition + likeType.getRows() + System.lineSeparator();
                     bw.write(eachLikeType);
                 }
+                int start = 0;
+                List<long[]> allVector = new ArrayList<>();
+                long[] paraRows = new long[n];
+                List<long[]> paraPresent = new ArrayList<>();
                 for (int i = 0; i < InTypes.size() + LikeTypes.size() + 1; i++) {
-                    String eachline = "";
+                    long[] eachVector = new long[n];
                     for (int j = 0; j < n; j++) {
                         String eachPara = vars[start++].toString().split("=")[1].trim();
-                        eachline = eachline + eachPara + " ";
+                        eachVector[j] = Long.parseLong(eachPara);
                     }
-                    eachline += System.lineSeparator();
-                    bw.write(eachline);
+                    allVector.add(eachVector);
+                }
+                paraRows = allVector.get(0);
+                paraPresent = allVector.subList(1, allVector.size());
+                List<long[]> expandParaRows = expandParaRowsVector(paraRows, lastGroupSize);
+                List<long[]> expandParaPresent = expandPresentVector(paraPresent, InTypes.size(), LikeTypes.size(), lastGroupSize, topoGraph);
+                List<long[]> allExpandVector = new ArrayList<>();
+                allExpandVector.addAll(expandParaRows);
+                allExpandVector.addAll(expandParaPresent);
+                for (long[] longs : allExpandVector) {
+                    StringBuilder eachLine = new StringBuilder();
+                    for (long aLong : longs) {
+                        eachLine.append(aLong).append(" ");
+                    }
+                    eachLine.append(System.lineSeparator());
+                    bw.write(eachLine.toString());
                 }
                 bw.close();
                 fw.close();
@@ -234,7 +251,12 @@ public class EquationSolver implements Callable<Integer> {
             model.sum(isPercentVector.get(i), ">=", down).post();
         }
         for (int i = 0; i < InTypes.size() + LikeTypes.size(); i++) {
-            String strRows = InTypes.get(i).getRows();
+            String strRows;
+            if (i < InTypes.size()) {
+                strRows = InTypes.get(i).getRows();
+            } else {
+                strRows = LikeTypes.get(i - InTypes.size()).getRows();
+            }
             int intRows = Integer.parseInt(strRows);
             intRows = (int) (intRows / denominator);
             int up = (int) (1.06 * intRows);
@@ -243,28 +265,72 @@ public class EquationSolver implements Callable<Integer> {
             model.sum(vectorMuls.get(i), ">=", (int) (Math.round(0.96 * intRows))).post();
         }
         //建模like中的包含和互斥关系
-        for (int i = 1; i < LikeTypes.size(); i++) {
-            for (int j = 0; j < i; j++) {
-                Queue<Integer> edgI = topoGraph.adj(i);
-                Queue<Integer> edgJ = topoGraph.adj(j);
-                IntVar[] iMulJ = new IntVar[n];
-                for (int i1 = 0; i1 < iMulJ.length; i1++) {
-                    iMulJ[i1] = isPercentVector.get(i + InTypes.size())[i1].mul(isPercentVector.get(j + InTypes.size())[i1]).intVar();
+        //思路是使用层序遍历的方法，对每一层的同父节点添加互斥约束，父节点与子节点添加包含约束
+        int[] zeroInNum = topoGraph.getInZero();
+        addExclusivePredicate(model, -1, zeroInNum, isPercentVector, lastGroupSize, InTypes.size(), true);
+        Queue<Integer> vec = new LinkedList<>();
+        for (int i : zeroInNum) {
+            vec.add(i);
+        }
+        while (!vec.isEmpty()) {
+            int cur = vec.poll();
+            Queue<Integer> cursNeighbor = topoGraph.adj(cur);
+            addExclusivePredicate(model, cur, cursNeighbor.stream().mapToInt(t -> t).toArray(), isPercentVector, lastGroupSize, InTypes.size(), false);
+            addInclusivePredicate(model, cur, topoGraph, isPercentVector, InTypes.size());
+            vec.addAll(cursNeighbor);
+        }
+
+        return model;
+    }
+
+    /**
+     * **添加互斥约束
+     */
+    public void addExclusivePredicate(Model model, int currentVec, int[] vertex, List<IntVar[]> isPercentVector, int lastGroupSize, int inTypeSize, boolean isRoot) {
+        if (vertex.length != 0) {
+            int n = isPercentVector.get(0).length;
+            int len = vertex.length;
+            if (isRoot) {
+                for (int i = 0; i < n - 1; i++) {
+                    IntVar[] allRowElement = new IntVar[len];
+                    for (int j = 0; j < len; j++) {
+                        allRowElement[j] = isPercentVector.get(vertex[j] + inTypeSize)[i];
+                    }
+                    model.sum(allRowElement, "<=", groupSize).post();
                 }
-                if (edgI.contains(j)) {
-                    for (int i2 = 0; i2 < iMulJ.length; i2++) {
-                        model.arithm(iMulJ[i2], "=", isPercentVector.get(j + InTypes.size())[i2]).post();
+                IntVar[] lastAllRowElement = new IntVar[len];
+                for (int j = 0; j < len; j++) {
+                    lastAllRowElement[j] = isPercentVector.get(vertex[j] + inTypeSize)[n - 1];
+                }
+                model.sum(lastAllRowElement, "<=", lastGroupSize).post();
+            } else {
+                IntVar[] currentVector = isPercentVector.get(currentVec + inTypeSize);
+                for (int i = 0; i < n; i++) {
+                    IntVar[] allRowElement = new IntVar[len];
+                    for (int j = 0; j < len; j++) {
+                        allRowElement[j] = isPercentVector.get(vertex[j] + inTypeSize)[i];
                     }
-                } else if (edgJ.contains(i)) {
-                    for (int i2 = 0; i2 < iMulJ.length; i2++) {
-                        model.arithm(iMulJ[i2], "=", isPercentVector.get(i + InTypes.size())[i2]).post();
-                    }
-                } else {
-                    model.sum(iMulJ, "=", 0).post();
+                    model.sum(allRowElement, "<=", currentVector[i]).post();
                 }
             }
         }
-        return model;
+    }
+
+    /**
+     * **添加包含约束
+     */
+    public void addInclusivePredicate(Model model, int currentVertex, TopoGraph topoGraph, List<IntVar[]> isPercentVector, int inTypeSize) {
+        Queue<Integer> children = topoGraph.adj(currentVertex);
+        if (children != null) {
+            for (Integer child : children) {
+                IntVar[] currentVector = isPercentVector.get(currentVertex + inTypeSize);
+                IntVar[] childVector = isPercentVector.get(child + inTypeSize);
+                for (int i = 0; i < currentVector.length; i++) {
+                    model.arithm(childVector[i], "<=", currentVector[i]).post();
+                }
+            }
+
+        }
     }
 
     public long getNullRows(DbConnector dbConnector) throws SQLException {
@@ -424,12 +490,14 @@ public class EquationSolver implements Callable<Integer> {
         return topoGraph;
     }
 
-    public List<String> getParaValueUpperBound(List<String> eachLine, List<InType> inTypes, HashSet<String> allDistinctParas, long tableSize) {
+    public List<String> getInParaValueUpperBound(List<String> eachLine, List<InType> inTypes, HashSet<String> allDistinctParas, long tableSize) {
         List<String> paraValueUpperBound = new ArrayList<>();
         List<List<String>> allParas = new ArrayList<>();
         for (String s : eachLine) {
-            List<String> paras = getAllParas(s);
-            allParas.add(paras);
+            if (s.contains(" in ") || s.contains(" IN ")) {
+                List<String> paras = getAllParas(s);
+                allParas.add(paras);
+            }
         }
         HashMap<String, Long> distinctPara2UpperBound = new HashMap<>();
         for (String allDistinctPara : allDistinctParas) {
@@ -453,11 +521,23 @@ public class EquationSolver implements Callable<Integer> {
         return paraValueUpperBound;
     }
 
-    public HashSet<String> getDistinctParas(List<String> eachLine) {
+    public List<String> getParaValueUpperBound(List<String> allInParaValueUpperBound, List<LikeType> likeTypes) {
+        List<String> allParaValueUpperBound = new ArrayList<>();
+        allParaValueUpperBound.addAll(allInParaValueUpperBound);
+        for (LikeType likeType : likeTypes) {
+            //todo 找到一个更适合的值
+            allParaValueUpperBound.add(likeType.getRows() + 1);
+        }
+        return allParaValueUpperBound;
+    }
+
+    public HashSet<String> getDistinctParasInIntypes(List<String> eachLine) {
         HashSet<String> alldistinct = new HashSet<>();
         for (int i = 0; i < eachLine.size(); i++) {
-            List<String> allParas = getAllParas(eachLine.get(i));
-            alldistinct.addAll(allParas);
+            if (eachLine.get(i).contains(" in ") || eachLine.get(i).contains(" IN ")) {
+                List<String> allParas = getAllParas(eachLine.get(i));
+                alldistinct.addAll(allParas);
+            }
         }
         return alldistinct;
     }
@@ -486,5 +566,114 @@ public class EquationSolver implements Callable<Integer> {
         }
     }
 
+    public List<long[]> expandParaRowsVector(long[] paraRows, int lastGroupSize) {
+        List<long[]> expandRowsVector = new ArrayList<>();
+        int n = (paraRows.length - 1) * groupSize + lastGroupSize;
+        long[] firstLineVector = new long[n];
+        int start = 0;
+        for (int i = 0; i < paraRows.length - 1; i++) {
+            long rows = paraRows[i];
+            for (int j = 0; j < groupSize; j++) {
+                firstLineVector[start++] = rows;
+            }
+        }
+        long rows = paraRows[paraRows.length - 1];
+        for (int j = 0; j < lastGroupSize; j++) {
+            firstLineVector[start++] = rows;
+        }
+        expandRowsVector.add(firstLineVector);
+        return expandRowsVector;
+    }
 
+    public List<long[]> expandPresentVector(List<long[]> paraPresent, int inTypeSize, int likeTypeSize, int lastGroupSize, TopoGraph topoGraph) {
+        List<long[]> expandPresentVector = new ArrayList<>();
+        List<long[]> inTypePresent = paraPresent.subList(0, inTypeSize);
+        List<long[]> likeTypePresent = paraPresent.subList(likeTypeSize, paraPresent.size());
+        int n = (paraPresent.get(0).length - 1) * groupSize + lastGroupSize;
+        for (long[] eachInTypePresent : inTypePresent) {
+            List<Long> eachExpandInTypePresent = new ArrayList<>();
+            for (int i = 0; i < eachInTypePresent.length; i++) {
+                long num = eachInTypePresent[i];
+                if (i == eachInTypePresent.length - 1) {
+                    for (long l = 0; l < num; l++) {
+                        eachExpandInTypePresent.add((long) 1);
+                    }
+                    for (long l = num; l < lastGroupSize; l++) {
+                        eachExpandInTypePresent.add((long) 0);
+                    }
+                } else {
+                    for (long l = 0; l < num; l++) {
+                        eachExpandInTypePresent.add((long) 1);
+                    }
+                    for (long l = num; l < groupSize; l++) {
+                        eachExpandInTypePresent.add((long) 0);
+                    }
+                }
+            }
+            expandPresentVector.add(eachExpandInTypePresent.stream().mapToLong(t -> t).toArray());
+        }
+        ParallelPortfolio portfolio = new ParallelPortfolio();
+        for (int s = 0; s < nbModels; s++) {
+            portfolio.addModel(makeModelForLikeType(likeTypePresent, lastGroupSize, topoGraph));
+        }
+        long a = System.currentTimeMillis();
+        if (portfolio.solve()) {
+            System.out.println("second_time:" + (System.currentTimeMillis() - a));
+            Variable[] vars = portfolio.getBestModel().getVars();
+            int start = 0;
+            for (int i = 0; i < likeTypeSize; i++) {
+                long[] eachVector = new long[n];
+                for (int j = 0; j < n; j++) {
+                    String eachPara = vars[start++].toString().split("=")[1].trim();
+                    eachVector[j] = Long.parseLong(eachPara);
+                }
+                expandPresentVector.add(eachVector);
+            }
+            //System.out.println(vars);
+        } else {
+            System.out.println("The solver has proved the problem has no solution");
+        }
+        return expandPresentVector;
+    }
+
+    public Model makeModelForLikeType(List<long[]> likeTypePresent, int lastGroupSize, TopoGraph topoGraph) {
+        Model model = new Model();
+        int n = (likeTypePresent.get(0).length - 1) * groupSize + lastGroupSize;
+        int beforeN = likeTypePresent.get(0).length;
+        List<IntVar[]> likePercentVector = new ArrayList<>();
+        for (int i = 0; i < likeTypePresent.size(); i++) {
+            IntVar[] each = model.intVarArray("a" + i, n, 0, 1);
+            likePercentVector.add(each);
+        }
+        for (int i = 0; i < likePercentVector.size(); i++) {
+            int start = 0;
+            for (int j = 0; j < beforeN - 1; j++) {
+                model.sum(Arrays.copyOfRange(likePercentVector.get(i), start, start + groupSize), "=", (int) likeTypePresent.get(i)[j]).post();
+                start += groupSize;
+            }
+            model.sum(Arrays.copyOfRange(likePercentVector.get(i), start, start + lastGroupSize), "=", (int) likeTypePresent.get(i)[beforeN - 1]).post();
+        }
+        for (int i = 1; i < likePercentVector.size(); i++) {
+            for (int j = 0; j < i; j++) {
+                Queue<Integer> edgI = topoGraph.adj(i);
+                Queue<Integer> edgJ = topoGraph.adj(j);
+                IntVar[] iMulJ = new IntVar[n];
+                for (int i1 = 0; i1 < n; i1++) {
+                    iMulJ[i1] = likePercentVector.get(i)[i1].mul(likePercentVector.get(j)[i1]).intVar();
+                }
+                if (edgI.contains(j)) {
+                    for (int i2 = 0; i2 < n; i2++) {
+                        model.arithm(iMulJ[i2], "=", likePercentVector.get(j)[i2]).post();
+                    }
+                } else if (edgJ.contains(i)) {
+                    for (int i2 = 0; i2 < n; i2++) {
+                        model.arithm(iMulJ[i2], "=", likePercentVector.get(i)[i2]).post();
+                    }
+                } else {
+                    model.sum(iMulJ, "=", 0).post();
+                }
+            }
+        }
+        return model;
+    }
 }

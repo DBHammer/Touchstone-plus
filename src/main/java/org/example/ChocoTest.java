@@ -24,12 +24,12 @@ public class ChocoTest {
             vectorMul3[i] = x[i].mul(b3[i]).intVar();
         }
         model.sum(x, "<=", 100).post();
-        model.sum(vectorMul1, "=", 60).post();
+        model.sum(vectorMul1, "=", 80).post();
         model.sum(vectorMul2, "=", 50).post();
         model.sum(vectorMul3, "=", 70).post();
         model.sum(b1, "=", 4).post();
         model.sum(b2, "=", 3).post();
-        model.sum(b3, "=", 5).post();
+        model.sum(b3, "=", 3).post();
         Solver solver = model.getSolver();
         if (solver.solve()) {
             // do something, e.g. print out variable values

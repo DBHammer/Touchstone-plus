@@ -30,12 +30,10 @@ public class DataGenerator implements Callable<Integer> {
     private long tableSize;
     private TopoGraph topoGraph;
     private double denominator;
-    private int groupSize;
-    private int lastGroupSize;
 
     public Integer call() throws IOException, MainException {
         init();
-        changeParaNum();
+        changeParaNumAndRows();
         //为n个参数的每一个生成一个随机的不重复的值
         int inSum = 0;
         for (InType inType : InTypes) {
@@ -108,51 +106,10 @@ public class DataGenerator implements Callable<Integer> {
                 tableSize = Integer.parseInt(infos[1]);
             } else if (infos.length == 2 && infos[0].equals("denominator:")) {
                 denominator = Double.parseDouble(infos[1]);
-            } else if (infos.length == 2 && infos[0].equals("groupSize:")) {
-                groupSize = Integer.parseInt(infos[1]);
-            } else if (infos.length == 2 && infos[0].equals("lastGroupSize:")) {
-                lastGroupSize = Integer.parseInt(infos[1]);
             } else {
-                long[] vector = new long[(infos.length - 1) * groupSize + lastGroupSize];
-                if (allVector.isEmpty()) {
-                    int start = 0;
-                    for (int i = 0; i < infos.length; i++) {
-                        if (i < infos.length - 1) {
-                            for (int j = start; j < start + groupSize; j++) {
-                                vector[j] = Integer.parseInt(infos[i]);
-                            }
-                            start += groupSize;
-                        } else {
-                            for (int j = start; j < start + lastGroupSize; j++) {
-                                vector[j] = Integer.parseInt(infos[i]);
-                            }
-                            start += lastGroupSize;
-                        }
-                    }
-                } else {
-                    int start = 0;
-                    for (int i = 0; i < infos.length; i++) {
-                        int numGt0 = Integer.parseInt(infos[i]);
-                        if (i < infos.length - 1) {
-                            for (int j = start; j < start + groupSize; j++) {
-                                if (j < start + numGt0) {
-                                    vector[j] = 1;
-                                } else {
-                                    vector[j] = 0;
-                                }
-                            }
-                            start += groupSize;
-                        } else {
-                            for (int j = start; j < start + lastGroupSize; j++) {
-                                if (j < start + numGt0) {
-                                    vector[j] = 1;
-                                } else {
-                                    vector[j] = 0;
-                                }
-                            }
-                            start += lastGroupSize;
-                        }
-                    }
+                long[] vector = new long[infos.length];
+                for (int i = 0; i < infos.length; i++) {
+                    vector[i] = Integer.parseInt(infos[i]);
                 }
                 allVector.add(vector);
             }
@@ -344,10 +301,12 @@ public class DataGenerator implements Callable<Integer> {
         }
         List<long[]> allCom = new ArrayList<>();
         printCombinations(tmp, -1, otherRows, new long[]{}, allCom);
+        List<Integer> hasFill = new ArrayList<>();
         for (int i = 0; i < allCom.get(0).length; i++) {
             for (Integer integer : allPostition) {
-                if (paraRows[integer] == allCom.get(0)[i]) {
+                if ((paraRows[integer] == allCom.get(0)[i]) && (!hasFill.contains(integer))) {
                     allPositionCanBeFill.add(integer);
+                    hasFill.add(integer);
                     break;
                 }
             }
@@ -367,11 +326,40 @@ public class DataGenerator implements Callable<Integer> {
         }
     }
 
-    public void changeParaNum() {
+    public void changeParaNumAndRows() {
+//        for (int i = 0; i < InTypes.size(); i++) {
+//            System.out.println(InTypes.get(i).getRows());
+//        }
+//        for (int i = 0; i < LikeTypes.size(); i++) {
+//            System.out.println(LikeTypes.get(i).getRows());
+//        }
+//        System.out.println("shnkshs");
+        //
         for (int i = 0; i < InTypes.size(); i++) {
             long[] isPresent = paraPresent.get(i);
             long sum = Arrays.stream(isPresent).sum();
             InTypes.get(i).setParaNum((int) (sum));
         }
+        for (int i = 0; i < LikeTypes.size(); i++) {
+            long[] isPresent = paraPresent.get(i + InTypes.size());
+            long sum = 0;
+            for (int j = 0; j < isPresent.length; j++) {
+                if (isPresent[j] == 1) {
+                    sum += paraRows[j];
+                }
+            }
+            LikeTypes.get(i).setRows(String.valueOf(sum));
+        }
+        //
+//        for (int i = 0; i < InTypes.size() + LikeTypes.size(); i++) {
+//            long[] isPresent = paraPresent.get(i);
+//            long sum = 0;
+//            for (int j = 0; j < isPresent.length; j++) {
+//                if (isPresent[j] == 1) {
+//                    sum += paraRows[j];
+//                }
+//            }
+//            System.out.println(sum);
+//        }
     }
 }

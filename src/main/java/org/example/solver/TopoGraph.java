@@ -1,9 +1,6 @@
 package org.example.solver;
 
-import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.Queue;
-import java.util.Scanner;
+import java.util.*;
 
 public class TopoGraph {
 
@@ -14,7 +11,7 @@ public class TopoGraph {
     //邻接表
     private Queue<Integer>[] adj;
 
-    public TopoGraph(int V){
+    public TopoGraph(int V) {
         //初始化顶点数量
         this.V = V;
         //初始化边的数量
@@ -27,12 +24,12 @@ public class TopoGraph {
     }
 
     //获取顶点数目
-    public int getV(){
+    public int getV() {
         return V;
     }
 
     //获取边的数目
-    public int getE(){
+    public int getE() {
         return E;
     }
 
@@ -44,23 +41,41 @@ public class TopoGraph {
     }
 
     //获取由v指出的边所连接的所有顶点
-    public Queue<Integer> adj(int v){
+    public Queue<Integer> adj(int v) {
         return adj[v];
     }
 
     //该图的反向图
-    private TopoGraph reverse(){
+    private TopoGraph reverse() {
         //创建有向图对象
         TopoGraph r = new TopoGraph(V);
 
-        for (int v = 0;v<V;v++){
+        for (int v = 0; v < V; v++) {
             //获取由该顶点v指出的所有边
             for (Integer w : adj[v]) {//原图中表示的是由顶点v->w的边
-                r.addEdge(w,v);//w->v
+                r.addEdge(w, v);//w->v
 
             }
 
         }
         return r;
+    }
+
+    //统计入度为0的点
+    public int[] getInZero() {
+        int[] inNum = new int[V];
+        for (int i = 0; i < V; i++) {
+            Queue<Integer> allAdj = adj(i);
+            for (Integer integer : allAdj) {
+                inNum[integer]++;
+            }
+        }
+        List<Integer> zeroInNum = new ArrayList<>();
+        for (int i = 0; i < inNum.length; i++) {
+            if (inNum[i] == 0) {
+                zeroInNum.add(i);
+            }
+        }
+        return zeroInNum.stream().mapToInt(t -> t).toArray();
     }
 }

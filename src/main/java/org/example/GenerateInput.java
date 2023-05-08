@@ -22,8 +22,8 @@ public class GenerateInput {
     public static String likeQueryPath = "D:\\eclipse-workspace\\multiStirngMatching\\conf\\likeQuery.txt";
 
     public static void main(String[] args) throws MainException, SQLException, IOException {
-        //generateInTypeAndLikeType();
-        generateInTypeCol();
+        generateInTypeAndLikeType();
+        //generateInTypeCol();
         //generateLikeTypeCol();
         //writeLikeQuery();
     }
@@ -126,7 +126,7 @@ public class GenerateInput {
         FileWriter fw = new FileWriter(new File(inputPath));
         BufferedWriter bw = new BufferedWriter(fw);
         //生成in语句
-        for (int i = 0; i < 500; i++) {
+        for (int i = 0; i < 20; i++) {
             Collections.shuffle(allDistinctPara);
             int length = r.nextInt(5) + 1;
             List<String> eachInList = allDistinctPara.subList(0, length);
@@ -157,7 +157,7 @@ public class GenerateInput {
             allDistinctHead.add(head);
         }
         HashSet<Integer> chosenOne = new HashSet<>();
-        /*for (int i = 0; i < 10; i++) {
+        for (int i = 0; i < 20; i++) {
             int likeStart = r.nextInt(30);
             while (chosenOne.contains(likeStart)) {
                 likeStart = r.nextInt(30);
@@ -171,7 +171,7 @@ public class GenerateInput {
             likeSql.append(" = ").append(outputCount);
             likeSqlPara = likeSqlPara + "'" + likePara + "%' = " + outputCount;
             bw.write(likeSqlPara + System.lineSeparator());
-        }*/
+        }
         bw.close();
         fw.close();
     }
