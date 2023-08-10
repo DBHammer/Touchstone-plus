@@ -1,40 +1,25 @@
-part.p_type in ('CbyNmF5U', 'cGaWwcwN', 'obtAQhCf')
-part.p_type in ('9WbDj8d0', 'XER6zmFi')
-part.p_type in ('U0cqhXFa', 'pamjTQlo')
-part.p_type in ('go', 'ky0', 'kyv')
-part.p_type in ('ky0', 'cKW61G2e')
-part.p_type in ('pVAPP1DO', 'ky0', 'kyv', '9WbDj8d0')
-part.p_type in ('J9', 'OpL6oO0v', 'gS', '9WbDj8d0')
-part.p_type in ('CQmr0iAQ', 'rL')
-part.p_type in ('ky0', 'kyv')
-part.p_type in ('Ri', 'CQmr0iAQ', 'rL')
-part.p_type in ('hs', 'ky0', 'kyv', 'cGaWwcwN', '9WbDj8d0', 'XER6zmFi')
-part.p_type in ('pVAPP1DO', 'XJJKJOAQ', '9WbDj8d0', 'B1njJ07z', 'nw4rEMKN')
-part.p_type in ('pVAPP1DO', 'SCm53geR', 'CbyNmF5U', 'GpkhjPVU', 'cGaWwcwN')
-part.p_type in ('aBA2oWzL', 'SVPyxEJN', 'hs', 'MBBqNuK1')
-part.p_type in ('ukTrbzkO', 'cGaWwcwN', 'obtAQhCf')
-part.p_type in ('SCm53geR', 'OpL6oO0v', 'gS')
-part.p_type in ('pVAPP1DO', 'B1njJ07z')
-part.p_type in ('FxT0GiHz', '0yN9Fbsu', 'ky0', 'kyv')
-part.p_type in ('pVAPP1DO', 'OpL6oO0v', 'gS', 'cGaWwcwN', 'obtAQhCf')
-part.p_type in ('FxT0GiHz', '0yN9Fbsu', 'OpL6oO0v', 'gS')
-part.p_type like 'K%'
-part.p_type like 'h%'
-part.p_type like '5%'
-part.p_type like 'kB%'
-part.p_type like 'kk%'
-part.p_type like 'I%'
-part.p_type like 'Rd%'
-part.p_type like 'RI%'
-part.p_type like 'Rk%'
-part.p_type like 'r%'
-part.p_type like 'Y%'
-part.p_type like '4%'
-part.p_type like 'R%'
-part.p_type like 'W%'
-part.p_type like 'k%'
-part.p_type like 'E%'
-part.p_type like 'Rf%'
-part.p_type like 'g%'
-part.p_type like 'J%'
-part.p_type like 'ky%'
+part.p_type like 'zc%'
+part.p_type like 'DZ%'
+part.p_type like '3n%'
+part.p_type like 'O9%'
+part.p_type like 'pY%'
+part.p_type like 'zcU%'
+part.p_type like 'pK%'
+part.p_type like 'uE%'
+part.p_type like 'zcA%'
+part.p_type like 'p%'
+part.p_type like 'D%'
+part.p_type like '3%'
+part.p_type like 'O%'
+part.p_type like 'u%'
+part.p_type like 'z%'
+part.p_type like '%W'
+part.p_type like '%i'
+part.p_type like '%JQ'
+part.p_type like '%T'
+part.p_type like '%EQ'
+part.p_type like '%L'
+part.p_type like '%xT'
+part.p_type like '%E'
+part.p_type like '%Q'
+part.p_type like '%X'

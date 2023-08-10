@@ -4,6 +4,7 @@ import org.chocosolver.solver.Model;
 import org.chocosolver.solver.ParallelPortfolio;
 import org.chocosolver.solver.variables.IntVar;
 import org.chocosolver.solver.variables.Variable;
+import org.chocosolver.solver.variables.impl.BitsetArrayIntVarImpl;
 import org.example.dbconnector.DbConnector;
 import org.example.dbconnector.adapter.PgConnector;
 import org.example.utils.CommonUtils;
@@ -47,33 +48,23 @@ public class EquationSolver implements Callable<Integer> {
         getInTypeAndLikeType(InTypes, LikeTypes, eachLine);
         HashSet<String> allDistinctParas = getDistinctParasInIntypes(eachLine);
         List<String> allInParasValueUpperBound = getInParaValueUpperBound(eachLine, InTypes, allDistinctParas, getTableSize(dbConnector));
-
-        double denominator = cutDomainInOneError(allInParasValueUpperBound, error);
+        List<String> allLikeParasValueUpperBound = getLikeParaValueUpperBound(LikeTypes);
+        List<String> allParasValueUpperBound = new ArrayList<>(allInParasValueUpperBound);
+        allParasValueUpperBound.addAll(allLikeParasValueUpperBound);
+        double denominator = cutDomainInOneError(allParasValueUpperBound, error);
         int allDistinctParaInCol = dbConnector.getAllDistinctString(colName, tableName).size();
-        TopoGraph topoGraphs = getTopoGraphs(eachLine);
+        TopoGraph topoGraphs = getTopoGraphs(eachLine, LikeTypes);
         solve(InTypes, LikeTypes, config.getOutputDirectory(), dbConnector, topoGraphs, allInParasValueUpperBound, allDistinctParaInCol, denominator);
         return 0;
     }
 
     public void solve(List<InType> InTypes, List<LikeType> LikeTypes, String outputPath, DbConnector dbConnector,
                       TopoGraph topoGraph, List<String> allInParasValueUpperBound, int allDistinctParaInCol, double denominator) throws IOException, SQLException, MainException {
-        if (InTypes.size() != 0 || LikeTypes.size() != 0) {
+        if (!InTypes.isEmpty() || !LikeTypes.isEmpty()) {
             //求方程个数
             int n = allInParasValueUpperBound.size();
-            if (LikeTypes.size() != 0) {
-                int[] typeNum = {0, 0, 0};
-                for (LikeType likeType : LikeTypes) {
-                    if (likeType.isFrontMatch()) {
-                        typeNum[0]++;
-                    }
-                    if (likeType.isMiddleMatch()) {
-                        typeNum[1]++;
-                    }
-                    if (likeType.isBehindMatch()) {
-                        typeNum[2]++;
-                    }
-                }
-                n += getMax(typeNum);
+            if (!LikeTypes.isEmpty()) {
+                n += LikeTypes.size();
             }
             List<String> allParasValueUpperBound = getParaValueUpperBound(allInParasValueUpperBound, LikeTypes);
             if (n > allDistinctParaInCol) {
@@ -125,6 +116,7 @@ public class EquationSolver implements Callable<Integer> {
                         topoGraph, allParasValueUpperBound, denominator));
             }
             long a = System.currentTimeMillis();
+            System.out.println("begin");
             if (portfolio.solve()) {
                 System.out.println("time:" + (System.currentTimeMillis() - a));
                 Variable[] vars = portfolio.getBestModel().getVars();
@@ -144,15 +136,15 @@ public class EquationSolver implements Callable<Integer> {
                 for (LikeType likeType : LikeTypes) {
                     String likePosition = "";
                     if (likeType.isFrontMatch()) {
-                        likePosition += "front ";
+                        likePosition += "front;";
                     }
                     if (likeType.isMiddleMatch()) {
-                        likePosition += "middle ";
+                        likePosition += "middle;";
                     }
                     if (likeType.isBehindMatch()) {
-                        likePosition = "behind ";
+                        likePosition += "behind;";
                     }
-                    String eachLikeType = "liketype: " + likePosition + likeType.getRows() + System.lineSeparator();
+                    String eachLikeType = "liketype: " + likePosition + " " + likeType.getRows() + System.lineSeparator();
                     bw.write(eachLikeType);
                 }
                 int start = 0;
@@ -170,7 +162,7 @@ public class EquationSolver implements Callable<Integer> {
                 paraRows = allVector.get(0);
                 paraPresent = allVector.subList(1, allVector.size());
                 List<long[]> expandParaRows = expandParaRowsVector(paraRows, lastGroupSize);
-                List<long[]> expandParaPresent = expandPresentVector(paraPresent, InTypes.size(), LikeTypes.size(), lastGroupSize, topoGraph);
+                List<long[]> expandParaPresent = expandPresentVector(paraPresent, InTypes.size(), LikeTypes.size(), lastGroupSize, topoGraph, LikeTypes);
                 List<long[]> allExpandVector = new ArrayList<>();
                 allExpandVector.addAll(expandParaRows);
                 allExpandVector.addAll(expandParaPresent);
@@ -261,15 +253,43 @@ public class EquationSolver implements Callable<Integer> {
             intRows = (int) (intRows / denominator);
             int up = (int) (1.06 * intRows);
             int down = (int) (0.94 * intRows);
-            model.sum(vectorMuls.get(i), "<=", (int) (Math.round(1.04 * intRows))).post();
-            model.sum(vectorMuls.get(i), ">=", (int) (Math.round(0.96 * intRows))).post();
+            model.sum(vectorMuls.get(i), "<=", (int) (Math.round(1.05 * intRows))).post();
+            model.sum(vectorMuls.get(i), ">=", (int) (Math.round(0.95 * intRows))).post();
         }
         //建模like中的包含和互斥关系
         //思路是使用层序遍历的方法，对每一层的同父节点添加互斥约束，父节点与子节点添加包含约束
         int[] zeroInNum = topoGraph.getInZero();
-        addExclusivePredicate(model, -1, zeroInNum, isPercentVector, lastGroupSize, InTypes.size(), true);
+        //从a%或者%a开始，暂时不考虑那些属于%a%的情况
+        int rootNum = 0;
+        for (int i = 0; i < zeroInNum.length; i++) {
+            if (!LikeTypes.get(zeroInNum[i]).isOnlyBehindMatch()&&!LikeTypes.get(zeroInNum[i]).isOnlyFrontMatch()) {
+                zeroInNum[i] = -2;
+            } else {
+                rootNum++;
+            }
+        }
+        int[] rootNodes = new int[rootNum];
+        List<Integer> frontRootNodes = new ArrayList<>();
+        List<Integer> behindRootNodes = new ArrayList<>();
+        int j = 0;
+        for (int k : zeroInNum) {
+            if (k != -2) {
+                rootNodes[j++] = k;
+                if (isFrontMatch(k, LikeTypes)) {
+                    frontRootNodes.add(k);
+                }
+                if (isBehindMatch(k, LikeTypes)) {
+                    behindRootNodes.add(k);
+                }
+            }
+        }
+        //只对同是前缀匹配和后缀匹配的root节点做互斥约束
+        int[] frontRootNodesArray = frontRootNodes.stream().mapToInt(Integer::intValue).toArray();
+        int[] behindRootNodesArray = behindRootNodes.stream().mapToInt(Integer::intValue).toArray();
+        addExclusivePredicate(model, -1, frontRootNodesArray, isPercentVector, lastGroupSize, InTypes.size(), true);
+        addExclusivePredicate(model, -1, behindRootNodesArray, isPercentVector, lastGroupSize, InTypes.size(), true);
         Queue<Integer> vec = new LinkedList<>();
-        for (int i : zeroInNum) {
+        for (int i : rootNodes) {
             vec.add(i);
         }
         while (!vec.isEmpty()) {
@@ -280,7 +300,22 @@ public class EquationSolver implements Callable<Integer> {
             vec.addAll(cursNeighbor);
         }
 
+
         return model;
+    }
+
+    /**
+     * 判断序号为i的拓扑图中的点是否只为前项匹配式
+     */
+    public boolean isFrontMatch(int i, List<LikeType> likeTypes) {
+        return likeTypes.get(i).isFrontMatch() && !likeTypes.get(i).isMiddleMatch() && !likeTypes.get(i).isBehindMatch();
+    }
+
+    /**
+     * 判断序号为i的拓扑图中的点是否只为后项匹配式
+     */
+    public boolean isBehindMatch(int i, List<LikeType> likeTypes) {
+        return !likeTypes.get(i).isFrontMatch() && !likeTypes.get(i).isMiddleMatch() && likeTypes.get(i).isBehindMatch();
     }
 
     /**
@@ -325,6 +360,11 @@ public class EquationSolver implements Callable<Integer> {
             for (Integer child : children) {
                 IntVar[] currentVector = isPercentVector.get(currentVertex + inTypeSize);
                 IntVar[] childVector = isPercentVector.get(child + inTypeSize);
+                IntVar[] minisVector = new IntVar[currentVector.length];
+                for (int i = 0; i < minisVector.length; i++) {
+                    minisVector[i] = currentVector[i].sub(childVector[i]).intVar();
+                }
+                model.sum(minisVector, "!=", 0).post();
                 for (int i = 0; i < currentVector.length; i++) {
                     model.arithm(childVector[i], "<=", currentVector[i]).post();
                 }
@@ -463,9 +503,10 @@ public class EquationSolver implements Callable<Integer> {
         return strs[0].trim().split("\\.")[0];
     }
 
-    public TopoGraph getTopoGraphs(List<String> eachline) {
+    public TopoGraph getTopoGraphs(List<String> eachline, List<LikeType> LikeTypes) {
         //todo like可能有重复
-        List<String> likeStr = new ArrayList<>();
+        Map<Integer, String> likeStr = new HashMap<>();
+        int start = 0;
         for (String line : eachline) {
             if (line.contains("like") || line.contains("LIKE")) {
                 String[] subStrs = line.split("like");
@@ -473,21 +514,192 @@ public class EquationSolver implements Callable<Integer> {
                     subStrs = line.split("LIKE");
                 }
                 String str = subStrs[1].split("=")[0].trim();
-                likeStr.add(str.substring(0, str.length() - 2));
+                str = str.substring(1, str.length() - 1);
+                likeStr.put(start++, str);
             }
         }
         TopoGraph topoGraph = new TopoGraph(likeStr.size());
         for (int i = 1; i < likeStr.size(); i++) {
             for (int j = 0; j < i; j++) {
-                if (likeStr.get(i).contains(likeStr.get(j))) {
+                if ((LikeTypes.get(i).isOnlyFrontMatch() && LikeTypes.get(j).isOnlyFrontMatch()) || (LikeTypes.get(i).isOnlyBehindMatch() && LikeTypes.get(j).isOnlyBehindMatch()))
+                    if (isContain(likeStr.get(i), likeStr.get(j))) {
+                        topoGraph.addEdge(i, j);
+                    }
+                if (isContain(likeStr.get(j), likeStr.get(i))) {
                     topoGraph.addEdge(j, i);
-                }
-                if (likeStr.get(j).contains(likeStr.get(i))) {
-                    topoGraph.addEdge(i, j);
                 }
             }
         }
+        //对于既不是前缀又不是后缀的节点，如果它们被加入到树中，则可以作为根节点存在
+        List<Integer> hasAdded = new ArrayList<>();
+        for (int i = 0; i < likeStr.size(); i++) {
+            if (!LikeTypes.get(i).isOnlyBehindMatch() && !LikeTypes.get(i).isOnlyFrontMatch()) {
+                int[] rootNodes = getRootNodes(topoGraph, LikeTypes, hasAdded);
+                addNode2Topograph(topoGraph, i, LikeTypes, rootNodes);
+                hasAdded.add(i);
+                //插入到树后，除了前缀约束的约束全部看作后缀约束
+                LikeTypes.get(i).setOnlyBehindMatch();
+            }
+        }
         return topoGraph;
+    }
+
+    public int[] getRootNodes(TopoGraph topoGraph, List<LikeType> LikeTypes, List<Integer> hasAdded) {
+        int[] zeroInNodes = topoGraph.getInZero();
+        List<Integer> rootNodes = new ArrayList<>();
+        for (int i = 0; i < zeroInNodes.length; i++) {
+            if (LikeTypes.get(zeroInNodes[i]).isOnlyBehindMatch() || hasAdded.contains(zeroInNodes[i])) {
+                rootNodes.add(zeroInNodes[i]);
+            }
+        }
+        return rootNodes.stream().mapToInt(Integer::intValue).toArray();
+    }
+
+    public void addNode2Topograph(TopoGraph topoGraph, int i, List<LikeType> LikeTypes, int[] rootNodes) {
+        int minDepth = Integer.MAX_VALUE;
+        int minDepthNode = Integer.MIN_VALUE;
+        //todo 仔细考虑没有后缀匹配的情况
+        for (int j = 0; j < rootNodes.length; j++) {
+            if (!LikeTypes.get(rootNodes[j]).isOnlyFrontMatch()) {
+                int topoDepth = getTopoDepth(topoGraph, rootNodes[j]);
+                if (topoDepth < minDepth) {
+                    minDepth = topoDepth;
+                    minDepthNode = rootNodes[j];
+                }
+            }
+        }
+        long rows = Long.parseLong(LikeTypes.get(i).getRows());
+        long rootNodeRows = Long.parseLong(LikeTypes.get(minDepthNode).getRows());
+        if (rows > rootNodeRows) {
+            topoGraph.addEdge(i, minDepthNode);
+        } else {
+            Map<String, Integer> addPosition = getAddPositionDFS(topoGraph, minDepthNode, i, LikeTypes);
+            int left = addPosition.get("left");
+            int right = addPosition.get("right");
+            if (right != Integer.MIN_VALUE) {
+                topoGraph.removeEdge(left, right);
+                topoGraph.addEdge(left, i);
+                topoGraph.addEdge(i, right);
+            } else {
+                topoGraph.addEdge(left, i);
+            }
+        }
+    }
+
+    public Map<String, Integer> getAddPositionDFS(TopoGraph topoGraph, int rootNode, int addNode, List<LikeType> LikeTypes) {
+        Map<String, Integer> addPosition = new HashMap<>();
+        long addNodeRows = Long.parseLong(LikeTypes.get(addNode).getRows());
+        long rootRows = Long.parseLong(LikeTypes.get(rootNode).getRows());
+        Queue<Integer> children = topoGraph.adj(rootNode);
+        if (children.isEmpty()) {
+            addPosition.put("left", rootNode);
+            addPosition.put("right", Integer.MIN_VALUE);
+            return addPosition;
+        } else {
+            long allChildRows = 0;
+            for (Integer child : children) {
+                allChildRows += Long.parseLong(LikeTypes.get(child).getRows());
+            }
+            for (Integer child : children) {
+                long childRows = Long.parseLong(LikeTypes.get(child).getRows());
+                if (addNodeRows < allChildRows) {
+                    addPosition.put("left", rootNode);
+                    addPosition.put("right", Integer.MIN_VALUE);
+                    break;
+                } else if (addNodeRows > childRows) {
+                    addPosition.put("left", rootNode);
+                    addPosition.put("right", child);
+                    break;
+                } else {
+                    addPosition = getAddPositionDFS(topoGraph, child, addNode, LikeTypes);
+                }
+            }
+        }
+        return addPosition;
+    }
+
+    public int getTopoDepth(TopoGraph topoGraph, int i) {
+        Queue<Integer> children = topoGraph.adj(i);
+        if (children.isEmpty()) {
+            return 1;
+        } else {
+            List<Integer> chidrenDepth = new ArrayList<>();
+            for (Integer child : children) {
+                int childDepth = getTopoDepth(topoGraph, child);
+                chidrenDepth.add(childDepth);
+            }
+            return Collections.max(chidrenDepth) + 1;
+        }
+    }
+
+    public int getLikePosition(String likeStr) {
+        int position = likeStr.indexOf("%");
+        if (position == 0) {
+            int secondPosition = likeStr.indexOf("%", 2);
+            if (secondPosition == -1) {
+                return 2;
+            } else {
+                return 1;
+            }
+        } else {
+            return 0;
+        }
+    }
+
+    public boolean isContain(String pattern1, String pattern2) {
+        int position1 = getLikePosition(pattern1);
+        int position2 = getLikePosition(pattern2);
+        if (position1 != position2) {
+            return false;
+        } else {
+            if (position1 == 0) {
+                String simplePattern1 = pattern1.substring(0, pattern1.length() - 1);
+                String simplePattern2 = pattern2.substring(0, pattern2.length() - 1);
+                if (patternContain(simplePattern1, simplePattern2, true)) {
+                    return true;
+                } else {
+                    return false;
+                }
+            } else if (position1 == 2) {
+                String simplePattern1 = pattern1.substring(1);
+                String simplePattern2 = pattern2.substring(1);
+                if (patternContain(simplePattern1, simplePattern2, false)) {
+                    return true;
+                } else {
+                    return false;
+                }
+            } else {
+                return false;
+            }
+        }
+    }
+
+    public boolean patternContain(String pattern1, String pattern2, boolean isFront) {
+        int len1 = pattern1.length();
+        int len2 = pattern2.length();
+        if (len1 > len2) {
+            return false;
+        } else {
+            if (isFront) {
+                boolean isContain = true;
+                for (int i = 0; i < len1; i++) {
+                    if (pattern1.charAt(i) != pattern2.charAt(i)) {
+                        isContain = false;
+                        break;
+                    }
+                }
+                return isContain;
+            } else {
+                boolean isContain = true;
+                for (int i = 0; i < len1; i++) {
+                    if (pattern1.charAt(len1 - i - 1) != pattern2.charAt(len2 - i - 1)) {
+                        isContain = false;
+                        break;
+                    }
+                }
+                return isContain;
+            }
+        }
     }
 
     public List<String> getInParaValueUpperBound(List<String> eachLine, List<InType> inTypes, HashSet<String> allDistinctParas, long tableSize) {
@@ -517,6 +729,14 @@ public class EquationSolver implements Callable<Integer> {
         Collections.sort(distinctPara2UpperBoundValues);
         for (Long value : distinctPara2UpperBoundValues) {
             paraValueUpperBound.add(value.toString());
+        }
+        return paraValueUpperBound;
+    }
+
+    public List<String> getLikeParaValueUpperBound(List<LikeType> LikeTypes) {
+        List<String> paraValueUpperBound = new ArrayList<>();
+        for (LikeType likeType : LikeTypes) {
+            paraValueUpperBound.add(likeType.getRows());
         }
         return paraValueUpperBound;
     }
@@ -585,10 +805,10 @@ public class EquationSolver implements Callable<Integer> {
         return expandRowsVector;
     }
 
-    public List<long[]> expandPresentVector(List<long[]> paraPresent, int inTypeSize, int likeTypeSize, int lastGroupSize, TopoGraph topoGraph) {
+    public List<long[]> expandPresentVector(List<long[]> paraPresent, int inTypeSize, int likeTypeSize, int lastGroupSize, TopoGraph topoGraph, List<LikeType> LikeTypes) {
         List<long[]> expandPresentVector = new ArrayList<>();
         List<long[]> inTypePresent = paraPresent.subList(0, inTypeSize);
-        List<long[]> likeTypePresent = paraPresent.subList(likeTypeSize, paraPresent.size());
+        List<long[]> likeTypePresent = paraPresent.subList(inTypeSize, paraPresent.size());
         int n = (paraPresent.get(0).length - 1) * groupSize + lastGroupSize;
         for (long[] eachInTypePresent : inTypePresent) {
             List<Long> eachExpandInTypePresent = new ArrayList<>();
@@ -614,7 +834,7 @@ public class EquationSolver implements Callable<Integer> {
         }
         ParallelPortfolio portfolio = new ParallelPortfolio();
         for (int s = 0; s < nbModels; s++) {
-            portfolio.addModel(makeModelForLikeType(likeTypePresent, lastGroupSize, topoGraph));
+            portfolio.addModel(makeModelForLikeType(likeTypePresent, lastGroupSize, topoGraph, LikeTypes));
         }
         long a = System.currentTimeMillis();
         if (portfolio.solve()) {
@@ -636,7 +856,7 @@ public class EquationSolver implements Callable<Integer> {
         return expandPresentVector;
     }
 
-    public Model makeModelForLikeType(List<long[]> likeTypePresent, int lastGroupSize, TopoGraph topoGraph) {
+    public Model makeModelForLikeType(List<long[]> likeTypePresent, int lastGroupSize, TopoGraph topoGraph, List<LikeType> LikeTypes) {
         Model model = new Model();
         int n = (likeTypePresent.get(0).length - 1) * groupSize + lastGroupSize;
         int beforeN = likeTypePresent.get(0).length;
@@ -653,27 +873,83 @@ public class EquationSolver implements Callable<Integer> {
             }
             model.sum(Arrays.copyOfRange(likePercentVector.get(i), start, start + lastGroupSize), "=", (int) likeTypePresent.get(i)[beforeN - 1]).post();
         }
-        for (int i = 1; i < likePercentVector.size(); i++) {
-            for (int j = 0; j < i; j++) {
-                Queue<Integer> edgI = topoGraph.adj(i);
-                Queue<Integer> edgJ = topoGraph.adj(j);
-                IntVar[] iMulJ = new IntVar[n];
-                for (int i1 = 0; i1 < n; i1++) {
-                    iMulJ[i1] = likePercentVector.get(i)[i1].mul(likePercentVector.get(j)[i1]).intVar();
+        int[] zeroInNum = topoGraph.getInZero();
+        //从a%或者%a开始，去掉那些属于%a%的情况
+        int rootNum = 0;
+        for (int i = 0; i < zeroInNum.length; i++) {
+            boolean isfront = LikeTypes.get(zeroInNum[i]).frontMatch;
+            boolean isMiddle = LikeTypes.get(zeroInNum[i]).middleMatch;
+            boolean isBehind = LikeTypes.get(zeroInNum[i]).behindMatch;
+            if (!((isfront && !isMiddle && !isBehind) || (!isfront && !isMiddle && isBehind))) {
+                zeroInNum[i] = -2;
+            } else {
+                rootNum++;
+            }
+        }
+        int[] rootNodes = new int[rootNum];
+        List<Integer> frontRootNodes = new ArrayList<>();
+        List<Integer> behindRootNodes = new ArrayList<>();
+        int j = 0;
+        for (int k : zeroInNum) {
+            if (k != -2) {
+                rootNodes[j++] = k;
+                if (isFrontMatch(k, LikeTypes)) {
+                    frontRootNodes.add(k);
                 }
-                if (edgI.contains(j)) {
-                    for (int i2 = 0; i2 < n; i2++) {
-                        model.arithm(iMulJ[i2], "=", likePercentVector.get(j)[i2]).post();
+                if (isBehindMatch(k, LikeTypes)) {
+                    behindRootNodes.add(k);
+                }
+            }
+        }
+        int[] frontRootNodesArray = frontRootNodes.stream().mapToInt(Integer::intValue).toArray();
+        int[] behindRootNodesArray = behindRootNodes.stream().mapToInt(Integer::intValue).toArray();
+        addExclusivePredicateInLikeModel(model, frontRootNodesArray, likePercentVector, lastGroupSize, true);
+        addExclusivePredicateInLikeModel(model, behindRootNodesArray, likePercentVector, lastGroupSize, true);
+        Queue<Integer> vec = new LinkedList<>();
+        for (int i : rootNodes) {
+            vec.add(i);
+        }
+        while (!vec.isEmpty()) {
+            int cur = vec.poll();
+            Queue<Integer> cursNeighbor = topoGraph.adj(cur);
+            addExclusivePredicateInLikeModel(model, cursNeighbor.stream().mapToInt(t -> t).toArray(), likePercentVector, lastGroupSize, false);
+            addInclusivePredicateInLikeModel(model, cur, topoGraph, likePercentVector);
+            vec.addAll(cursNeighbor);
+        }
+        return model;
+    }
+
+    public void addExclusivePredicateInLikeModel(Model model, int[] vertex, List<IntVar[]> likePercentVector, int lastGroupSize, boolean isRoot) {
+        if (vertex.length != 0) {
+            int n = likePercentVector.get(0).length;
+            int len = vertex.length;
+            for (int i = 1; i < len; i++) {
+                for (int j = 0; j < i; j++) {
+                    IntVar[] iMulJ = new IntVar[n];
+                    for (int i1 = 0; i1 < n; i1++) {
+                        iMulJ[i1] = likePercentVector.get(vertex[i])[i1].mul(likePercentVector.get(vertex[j])[i1]).intVar();
                     }
-                } else if (edgJ.contains(i)) {
-                    for (int i2 = 0; i2 < n; i2++) {
-                        model.arithm(iMulJ[i2], "=", likePercentVector.get(i)[i2]).post();
-                    }
-                } else {
                     model.sum(iMulJ, "=", 0).post();
                 }
             }
         }
-        return model;
+    }
+
+    public void addInclusivePredicateInLikeModel(Model model, int currentVertex, TopoGraph topoGraph, List<IntVar[]> likePercentVector) {
+        Queue<Integer> children = topoGraph.adj(currentVertex);
+        int n = likePercentVector.get(0).length;
+        if (children != null) {
+            for (Integer child : children) {
+                IntVar[] currentVector = likePercentVector.get(currentVertex);
+                IntVar[] childVector = likePercentVector.get(child);
+                IntVar[] iMulJ = new IntVar[n];
+                for (int i1 = 0; i1 < n; i1++) {
+                    iMulJ[i1] = currentVector[i1].mul(childVector[i1]).intVar();
+                }
+                for (int i2 = 0; i2 < n; i2++) {
+                    model.arithm(iMulJ[i2], "=", childVector[i2]).post();
+                }
+            }
+        }
     }
 }

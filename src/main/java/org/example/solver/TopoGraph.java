@@ -36,8 +36,16 @@ public class TopoGraph {
     //向有向图中添加一条边 v->w
     public void addEdge(int v, int w) {
         //只需要让顶点w出现在顶点v的邻接表中，因为边是有方向的，最终，顶点v的邻接表中存储的相邻顶点的含义是：  v->其他顶点
-        adj[v].add(w);
-        E++;
+        if (!hasPath(v, w)) {
+            adj[v].add(w);
+            E++;
+        }
+    }
+
+    public void removeEdge(int v, int w) {
+        //只需要让顶点w出现在顶点v的邻接表中，因为边是有方向的，最终，顶点v的邻接表中存储的相邻顶点的含义是：  v->其他顶点
+        adj[v].remove(w);
+        E--;
     }
 
     //获取由v指出的边所连接的所有顶点
@@ -77,5 +85,22 @@ public class TopoGraph {
             }
         }
         return zeroInNum.stream().mapToInt(t -> t).toArray();
+    }
+
+    //判断两点是否已经有路径
+    public boolean hasPath(int i, int j) {
+        Queue<Integer> children = adj(i);
+        if (children.contains(j)) {
+            return true;
+        } else {
+            boolean has = false;
+            for (Integer child : children) {
+                if (hasPath(child, j)) {
+                    has = true;
+                    break;
+                }
+            }
+            return has;
+        }
     }
 }

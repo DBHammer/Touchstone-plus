@@ -118,7 +118,7 @@ public class GenerateInput {
 
     public static void generateInTypeAndLikeType() throws MainException, SQLException, IOException {
         //对tpch里part表的p_type列生成随机的in约束
-        DatabaseConnectorConfig config1 = new DatabaseConnectorConfig("biui.me", "5432", "postgres", "Biui1227..", "tpch1");
+        DatabaseConnectorConfig config1 = new DatabaseConnectorConfig("wqs97.click", "5432", "postgres", "Biui1227..", "tpch1");
         DbConnector dbConnector1 = new PgConnector(config1);
         List<String> allDistinctPara = dbConnector1.getAllDistinctString("p_type", "part");
         int tableSize = dbConnector1.getTableSize("part");
@@ -126,7 +126,7 @@ public class GenerateInput {
         FileWriter fw = new FileWriter(new File(inputPath));
         BufferedWriter bw = new BufferedWriter(fw);
         //生成in语句
-        for (int i = 0; i < 20; i++) {
+        for (int i = 0; i < 0; i++) {
             Collections.shuffle(allDistinctPara);
             int length = r.nextInt(5) + 1;
             List<String> eachInList = allDistinctPara.subList(0, length);
@@ -144,32 +144,85 @@ public class GenerateInput {
             bw.write(eachline + System.lineSeparator());
         }
 
-        //得到p_type列所有的开头
+        //得到p_type列所有的开头，中间和尾部
         HashSet<String> allDistinctHead = new HashSet<>();
+        HashSet<String> allDistinctMid = new HashSet<>();
+        HashSet<String> allDistinctTail = new HashSet<>();
         for (String s : allDistinctPara) {
             String[] headSplit = s.split(" ");
+            //取随机长度的头
             int headLength = r.nextInt(2) + 1;
             String head = "";
             for (int i = 0; i < headLength; i++) {
                 head += headSplit[i] + " ";
             }
             head = head.trim();
+            //取随机长度的尾
+            int tailLength = r.nextInt(2) + 1;
+            String tail = "";
+            for (int i = 3 - tailLength; i < 3; i++) {
+                tail += headSplit[i] + " ";
+            }
+            tail = tail.trim();
+
             allDistinctHead.add(head);
+            allDistinctMid.add(headSplit[1]);
+            allDistinctTail.add(tail);
         }
-        HashSet<Integer> chosenOne = new HashSet<>();
-        for (int i = 0; i < 20; i++) {
+        HashSet<Integer> chosenStart = new HashSet<>();
+        HashSet<Integer> chosenMid = new HashSet<>();
+        HashSet<Integer> chosenTail = new HashSet<>();
+        for (int i = 0; i < 10; i++) {
+            //随机选择一个开头
             int likeStart = r.nextInt(30);
-            while (chosenOne.contains(likeStart)) {
+            while (chosenStart.contains(likeStart)) {
                 likeStart = r.nextInt(30);
             }
-            chosenOne.add(likeStart);
-            String likeSqlPara = "p_type like ";
+            chosenStart.add(likeStart);
+
+            String likeSqlPara = "part.p_type like ";
             StringBuilder likeSql = new StringBuilder("select count(*) from part where p_type like");
             String likePara = allDistinctHead.stream().toList().get(likeStart);
             likeSql.append(" '").append(likePara).append("%'");
             int outputCount = dbConnector1.getSqlResult(likeSql.toString());
             likeSql.append(" = ").append(outputCount);
             likeSqlPara = likeSqlPara + "'" + likePara + "%' = " + outputCount;
+            bw.write(likeSqlPara + System.lineSeparator());
+        }
+        for (int i = 0; i < 5; i++) {
+            //随机选择一个中间
+            int likeMid = r.nextInt(5);
+            while (chosenMid.contains(likeMid)) {
+                likeMid = r.nextInt(5);
+            }
+            chosenMid.add(likeMid);
+
+
+            String likeSqlPara = "part.p_type like ";
+            StringBuilder likeSql = new StringBuilder("select count(*) from part where p_type like");
+            String likePara = allDistinctMid.stream().toList().get(likeMid);
+            likeSql.append(" '").append("%").append(likePara).append("%'");
+            int outputCount = dbConnector1.getSqlResult(likeSql.toString());
+            likeSql.append(" = ").append(outputCount);
+            likeSqlPara = likeSqlPara + "'" + "%" + likePara + "%' = " + outputCount;
+            bw.write(likeSqlPara + System.lineSeparator());
+        }
+        for (int i = 0; i < 10; i++) {
+            //随机选择一个结尾
+            int likeTail = r.nextInt(25);
+            while (chosenTail.contains(likeTail)) {
+                likeTail = r.nextInt(25);
+            }
+            chosenTail.add(likeTail);
+
+
+            String likeSqlPara = "part.p_type like ";
+            StringBuilder likeSql = new StringBuilder("select count(*) from part where p_type like");
+            String likePara = allDistinctTail.stream().toList().get(likeTail);
+            likeSql.append(" '").append("%").append(likePara).append("'");
+            int outputCount = dbConnector1.getSqlResult(likeSql.toString());
+            likeSql.append(" = ").append(outputCount);
+            likeSqlPara = likeSqlPara + "'%" + likePara + "' = " + outputCount;
             bw.write(likeSqlPara + System.lineSeparator());
         }
         bw.close();

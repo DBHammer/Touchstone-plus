@@ -1,11 +1,14 @@
 package org.example.generator;
 
+import org.example.solver.LikeType;
+
 import java.util.*;
 
 public class RandomStringGenerator {
 
     private int length;
     private int size;
+    private List<LikeType> LikeTypes;
 
     public String[] getRandomStringArray(String[] likeParas) {
         String[] strs = new String[size];
@@ -20,10 +23,28 @@ public class RandomStringGenerator {
             }
 
             boolean canBeAdd = true;
-            for (String likePara : likeParas) {
+            /*for (String likePara : likeParas) {
                 if (sb.toString().startsWith(likePara)) {
                     canBeAdd = false;
                     break;
+                }
+            }*/
+            for (int i = 0; i < likeParas.length; i++) {
+                if (LikeTypes.get(i).isOnlyBehindMatch()) {
+                    if (sb.toString().startsWith(likeParas[i])) {
+                        canBeAdd = false;
+                        break;
+                    }
+                } else if (LikeTypes.get(i).isOnlyFrontMatch()) {
+                    if (sb.reverse().toString().startsWith(likeParas[i])) {
+                        canBeAdd = false;
+                        break;
+                    }
+                } else if (LikeTypes.get(i).isOnlyFrontMatch()) {
+                    if (sb.toString().contains(likeParas[i])) {
+                        canBeAdd = false;
+                        break;
+                    }
                 }
             }
             if (canBeAdd) {
@@ -52,8 +73,9 @@ public class RandomStringGenerator {
         this.size = size;
     }
 
-    public RandomStringGenerator(int length, int size) {
+    public RandomStringGenerator(int length, int size, List<LikeType> LikeTyeps) {
         this.length = length;
         this.size = size;
+        this.LikeTypes = LikeTyeps;
     }
 }

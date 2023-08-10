@@ -1,5 +1,8 @@
 package org.example.generator;
 
+import org.example.solver.LikeType;
+import org.example.utils.exception.MainException;
+
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
@@ -15,27 +18,11 @@ public class SqlWriter {
     private String tableName;
     private String colName;
     private int inTypeSize;
-    private int likeTypeSize;
+    private List<LikeType> LikeTypes;
 
-    public void writeNewSql() throws IOException {
+    public void writeNewSql() throws IOException, MainException {
         FileWriter fw = new FileWriter(new File(writeSqlPath));
         BufferedWriter bw = new BufferedWriter(fw);
-        /*for (List<String> allPara : allInParas) {
-            String eachLine = tableName + "." + colName + " in " + "(";
-            for (int i = 0; i < allPara.size(); i++) {
-                if (i == allPara.size() - 1) {
-                    eachLine += "'" + allPara.get(i) + "'";
-                } else {
-                    eachLine += "'" + allPara.get(i) + "', ";
-                }
-            }
-            eachLine += ")";
-            bw.write(eachLine + System.lineSeparator());
-        }
-        for (int i = 0; i < likeStrs.length; i++) {
-            String eachLine = tableName + "." + colName + " like " + "'" + likeStrs[i] + "%';";
-            bw.write(eachLine + System.lineSeparator());
-        }*/
         for (int i = 0; i < inTypeSize; i++) {
             String eachLine = tableName + "." + colName + " in " + "(";
             long[] isPresent = paraPresent.get(i);
@@ -55,22 +42,31 @@ public class SqlWriter {
             eachLine += ")";
             bw.write(eachLine + System.lineSeparator());
         }
-        for (int i = 0; i < likeTypeSize; i++) {
-            String eachLine = tableName + "." + colName + " like " + "'" + likeParaValues[i] + "%'";
-            bw.write(eachLine + System.lineSeparator());
+        for (int i = 0; i < LikeTypes.size(); i++) {
+            if (LikeTypes.get(i).isOnlyBehindMatch()) {
+                String eachLine = tableName + "." + colName + " like " + "'" + likeParaValues[i] + "%'";
+                bw.write(eachLine + System.lineSeparator());
+            } else if (LikeTypes.get(i).isOnlyFrontMatch()) {
+                StringBuilder reverseString = new StringBuilder(likeParaValues[i]);
+                reverseString = reverseString.reverse();
+                String eachLine = tableName + "." + colName + " like " + "'%" + reverseString + "'";
+                bw.write(eachLine + System.lineSeparator());
+            } else {
+                throw new MainException("暂时不支持的情况");
+            }
         }
         bw.close();
         fw.close();
     }
 
-    public SqlWriter(String[] allParaValues, String[] likeParaValues, List<long[]> paraPresent, String tableName, String colName, int inTypeSize, int likeTypeSize) {
+    public SqlWriter(String[] allParaValues, String[] likeParaValues, List<long[]> paraPresent, String tableName, String colName, int inTypeSize, List<LikeType> LikeTypes) {
         this.allParaValues = allParaValues;
         this.likeParaValues = likeParaValues;
         this.paraPresent = paraPresent;
         this.colName = colName;
         this.tableName = tableName;
         this.inTypeSize = inTypeSize;
-        this.likeTypeSize = likeTypeSize;
+        this.LikeTypes = LikeTypes;
     }
 
     public String[] getAllParaValues() {
@@ -98,11 +94,11 @@ public class SqlWriter {
         this.inTypeSize = inTypeSize;
     }
 
-    public int getLikeTypeSize() {
-        return likeTypeSize;
+    public List<LikeType> getLikeTypes() {
+        return LikeTypes;
     }
 
-    public void setLikeTypeSize(int likeTypeSize) {
-        this.likeTypeSize = likeTypeSize;
+    public void setLikeTypes(List<LikeType> likeTypes) {
+        LikeTypes = likeTypes;
     }
 }

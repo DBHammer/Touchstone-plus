@@ -40,17 +40,17 @@ public class DataGenerator implements Callable<Integer> {
             inSum += inType.getParaNum();
         }
 
-        LikePatterGenerator likePatterGenerator = new LikePatterGenerator(topoGraph);
+        LikePatterGenerator likePatterGenerator = new LikePatterGenerator(topoGraph, LikeTypes);
         //todo 需要考虑in和like的参数有重复的情况
         String[] likeParas = likePatterGenerator.getLikeParas();
 
-        RandomStringGenerator randomStringGenerator = new RandomStringGenerator(8, inSum + 1);
+        RandomStringGenerator randomStringGenerator = new RandomStringGenerator(8, inSum + LikeTypes.size(), LikeTypes);
         //todo 这里考虑随机生成的in类型参数不能与like冲突，但是之后应该考虑前向中向后向like的情况
         String[] inParas = randomStringGenerator.getRandomStringArray(likeParas);
 
         int[] entry = likePatterGenerator.getInNum();
         String[] allParaValue = giveValue2AllParas(inParas, likeParas, entry, InTypes.size());
-        SqlWriter sqlWriter = new SqlWriter(allParaValue, likeParas, paraPresent, tableName, colName, InTypes.size(), LikeTypes.size());
+        SqlWriter sqlWriter = new SqlWriter(allParaValue, likeParas, paraPresent, tableName, colName, InTypes.size(), LikeTypes);
         sqlWriter.writeNewSql();
         DataWriter dataWriter = new DataWriter(allParaValue, paraRows, nullRows, dataPath, tableSize, inParas[inParas.length - 1]);
         dataWriter.generateData();
@@ -86,13 +86,13 @@ public class DataGenerator implements Callable<Integer> {
                 InTypes.add(intype);
             } else if (infos.length == 3 && infos[0].equals("liketype:")) {
                 boolean isFront = false, isMiddle = false, isBehind = false;
-                if (infos[1].equals("front")) {
+                if (infos[1].contains("front")) {
                     isFront = true;
                 }
-                if (infos[1].equals("middle")) {
+                if (infos[1].contains("middle")) {
                     isMiddle = true;
                 }
-                if (infos[1].equals("behind")) {
+                if (infos[1].contains("behind")) {
                     isBehind = true;
                 }
                 LikeType likeType = new LikeType(isFront, isMiddle, isBehind, infos[2]);
@@ -133,7 +133,7 @@ public class DataGenerator implements Callable<Integer> {
     }
 
     public boolean isBigDecimal(String str) {
-        if (str == null || str.trim().length() == 0) {
+        if (str == null || str.trim().isEmpty()) {
             return false;
         }
         char[] chars = str.toCharArray();
@@ -156,19 +156,62 @@ public class DataGenerator implements Callable<Integer> {
     }
 
     public void initTopograph(int inTypeSize, int likeTypeSize) {
-        //todo 考虑like有重复的情况
+        //首先为所有的01向量进行排序，按照1的个数从大到小排序
+        int[] sortedNode = new int[likeTypeSize];
+        for (int i = 0; i < likeTypeSize; i++) {
+            sortedNode[i] = i + inTypeSize;
+        }
+        sortNode(sortedNode);
+//        for (int i = 0; i < sortedNode.length; i++) {
+//            int num = sortedNode[i];
+//            System.out.println(Arrays.stream(paraPresent.get(num)).sum());
+//        }
+        //为前缀匹配和后缀匹配分别简历拓扑图
         topoGraph = new TopoGraph(likeTypeSize);
-        for (int i = 1; i < likeTypeSize; i++) {
-            long[] vecter1 = paraPresent.get(i + inTypeSize);
-            for (int j = 0; j < i; j++) {
-                long[] vecter2 = paraPresent.get(j + inTypeSize);
-                if (isContainVecter(vecter1, vecter2)) {
-                    topoGraph.addEdge(i, j);
-                }
-                if (isContainVecter(vecter2, vecter1)) {
-                    topoGraph.addEdge(j, i);
+        for (int i = 0; i < likeTypeSize; i++) {
+            long[] vecter1 = paraPresent.get(sortedNode[i]);
+            for (int j = i + 1; j < likeTypeSize; j++) {
+                if (canBeTopo(sortedNode[i] - inTypeSize, sortedNode[j] - inTypeSize)) {
+                    long[] vecter2 = paraPresent.get(sortedNode[j]);
+                    if (isContainVecter(vecter1, vecter2)) {
+                        topoGraph.addEdge(sortedNode[i], sortedNode[j]);
+                        break;
+                    }
+                    if (isContainVecter(vecter2, vecter1)) {
+                        topoGraph.addEdge(sortedNode[j], sortedNode[i]);
+                        break;
+                    }
                 }
             }
+        }
+    }
+
+    //对约束进行排序
+    public void sortNode(int[] sortedNode) {
+        int len = sortedNode.length;
+        for (int i = 0; i < len; i++) {
+            for (int j = 0; j + 1 < len - i - 1; j++) {
+                long sumj = Arrays.stream(paraPresent.get(sortedNode[j])).sum();
+                long sumj1 = Arrays.stream(paraPresent.get(sortedNode[j + 1])).sum();
+                if (sumj > sumj1) {
+                    int tmp = sortedNode[j];
+                    sortedNode[j] = sortedNode[j + 1];
+                    sortedNode[j + 1] = tmp;
+                }
+            }
+        }
+    }
+
+    /**
+     * 判断是否能纳入拓扑图，目前只允许前缀式匹配和后缀式匹配，类似%a%暂时不纳入topo图
+     */
+    public boolean canBeTopo(int i, int j) {
+        if (LikeTypes.get(i).isOnlyFrontMatch() && LikeTypes.get(j).isOnlyFrontMatch()) {
+            return true;
+        } else if (LikeTypes.get(i).isOnlyBehindMatch() && LikeTypes.get(j).isOnlyBehindMatch()) {
+            return true;
+        } else {
+            return false;
         }
     }
 
@@ -196,16 +239,22 @@ public class DataGenerator implements Callable<Integer> {
         }
     }
 
-    public String[] giveValue2AllParas(String[] inParas, String[] likeParas, int[] entry, int inSum) {
+    public String[] giveValue2AllParas(String[] inParas, String[] likeParas, int[] entry, int inSum) throws MainException {
         String[] allParaValues = new String[paraRows.length];
+        String[] allFrontParaValues = new String[paraRows.length];
+        String[] allBehindParaValues = new String[paraRows.length];
         for (int i = 0; i < entry.length; i++) {
-            if (entry[i] == 0) {
-                giveValue2LikeParas(allParaValues, likeParas, topoGraph, i, inSum);
+            if (entry[i] == 0 && LikeTypes.get(i).isOnlyBehindMatch()) {
+                giveValue2LikeParas(allFrontParaValues, likeParas, topoGraph, i, inSum);
+            }
+            if (entry[i] == 0 && LikeTypes.get(i).isOnlyFrontMatch()) {
+                giveValue2LikeParas(allBehindParaValues, likeParas, topoGraph, i, inSum);
             }
         }
+        combinateParaValues(likeParas, allParaValues, allFrontParaValues, allBehindParaValues, entry);
         for (int i = 0; i < allParaValues.length; i++) {
-            if (allParaValues[i] != null) {
-                System.out.println(allParaValues[i] + " " + paraRows[i]);
+            if (allParaValues[i].isEmpty()) {
+                allParaValues[i] = inParas[inSum++];
             }
         }
         int start = 0;
@@ -217,11 +266,93 @@ public class DataGenerator implements Callable<Integer> {
         return allParaValues;
     }
 
+    public void combinateParaValues(String[] likeParas, String[] allParaValue, String[] allFrontParaValues, String[] allBehindParaValues, int[] entry) throws MainException {
+        //记录所有需要被前缀和后缀LIKE包含到的位置
+        boolean[] isLike = new boolean[allParaValue.length];
+        for (int i = 0; i < allParaValue.length; i++) {
+            if (allFrontParaValues[i] != null || allBehindParaValues[i] != null) {
+                isLike[i] = true;
+            } else {
+                isLike[i] = false;
+            }
+        }
+        //首先对前缀和后缀式子做一个补全,防止在做类似%a的插入的时候，影响到a%的概率。
+        for (int i = 0; i < allFrontParaValues.length; i++) {
+            if (allFrontParaValues[i] == null && isLike[i]) {
+                //随机生成一个与之前前缀不同的
+                String head = getDifferentString(likeParas, entry, 1);
+                allFrontParaValues[i] = head;
+            }
+        }
+        for (int i = 0; i < allBehindParaValues.length; i++) {
+            if (allBehindParaValues[i] == null && isLike[i]) {
+                //随机生成一个与之前前缀不同的
+                String tail = getDifferentString(likeParas, entry, 0);
+                allBehindParaValues[i] = tail;
+            }
+        }
+        for (int i = 0; i < allParaValue.length; i++) {
+            String str = "";
+            String head = allFrontParaValues[i];
+            String tail = allBehindParaValues[i];
+            if (head != null) {
+                for (int j = 0; j < head.length(); j++) {
+                    str += head.charAt(j);
+                }
+            }
+            if (tail != null) {
+                for (int j = tail.length() - 1; j >= 0; j--) {
+                    str += tail.charAt(j);
+                }
+            }
+            allParaValue[i] = str;
+        }
+    }
+
+    public String getDifferentString(String[] likeParas, int[] entry, int isFrontOrBehind) throws MainException {
+        String result = "";
+        char[] chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789".toCharArray();
+        Random random = new Random();
+        if (isFrontOrBehind == 1) {
+            //为后缀式%a对应的前缀式补全与之前前缀式不同的前缀，防止冲突
+            List<String> allHeadExist = new ArrayList<>();
+            for (int i = 0; i < likeParas.length; i++) {
+                if (LikeTypes.get(i).isOnlyBehindMatch() && entry[i] == 0) {
+                    allHeadExist.add(likeParas[i]);
+                }
+            }
+            return getString(result, chars, random, allHeadExist);
+        } else if (isFrontOrBehind == 0) {
+            List<String> allTailExist = new ArrayList<>();
+            for (int i = 0; i < likeParas.length; i++) {
+                if (LikeTypes.get(i).isOnlyFrontMatch() && entry[i] == 0) {
+                    allTailExist.add(likeParas[i]);
+                }
+            }
+            return getString(result, chars, random, allTailExist);
+        } else {
+            throw new MainException("补全的类型必须是前缀式或者后缀式");
+        }
+    }
+
+    private String getString(String result, char[] chars, Random random, List<String> allStringExist) {
+        for (int i = 0; i < allStringExist.get(0).length(); i++) {
+            result += chars[random.nextInt(62)];
+        }
+        while (allStringExist.contains(result) && !result.isEmpty()) {
+            result = "";
+            for (int i = 0; i < allStringExist.get(0).length(); i++) {
+                result += chars[random.nextInt(62)];
+            }
+        }
+        return result;
+    }
+
     public void giveValue2LikeParas(String[] allParaValues, String[] likeParas, TopoGraph topoGraph, int i, int inTypeSize) {
         Queue<Integer> allChild = topoGraph.adj(i);
         String currentStr = likeParas[i];
         long[] isPresent = paraPresent.get(i + inTypeSize);
-        if (allChild.size() == 0) {
+        if (allChild.isEmpty()) {
             List<Integer> allPosition = new ArrayList<>();
             for (int j = 0; j < isPresent.length; j++) {
                 if (isPresent[j] == 1) {
@@ -229,7 +360,7 @@ public class DataGenerator implements Callable<Integer> {
                 }
             }
             List<Integer> allPositionCanBeFill = getAllPositionCanBeFill(allPosition, Long.parseLong(LikeTypes.get(i).getRows()), paraRows);
-            List<String> strs = getDifferentStringFromChild(currentStr, null, allPositionCanBeFill.size());
+            List<String> strs = getDifferentStringFromChild(currentStr, null, allPositionCanBeFill.size(), likeParas);
             int start = 0;
             for (Integer integer : allPositionCanBeFill) {
                 allParaValues[integer] = strs.get(start++);
@@ -245,8 +376,8 @@ public class DataGenerator implements Callable<Integer> {
             for (int k = 0; k < isPresent.length; k++) {
                 if (isPresent[k] == 1) {
                     boolean canBeFill = true;
-                    for (long[] eachChileIsPresent : childIsPresent) {
-                        if (eachChileIsPresent[k] == 1) {
+                    for (long[] eachChildIsPresent : childIsPresent) {
+                        if (eachChildIsPresent[k] == 1) {
                             canBeFill = false;
                         }
                     }
@@ -261,7 +392,7 @@ public class DataGenerator implements Callable<Integer> {
                 otherRows = otherRows - Long.parseLong(LikeTypes.get(integer).getRows());
             }
             List<Integer> allPositionCanBeFill = getAllPositionCanBeFill(allPosition, otherRows, paraRows);
-            List<String> strs = getDifferentStringFromChild(currentStr, childStr, allPositionCanBeFill.size());
+            List<String> strs = getDifferentStringFromChild(currentStr, childStr, allPositionCanBeFill.size(), likeParas);
             int start = 0;
             for (Integer integer : allPositionCanBeFill) {
                 allParaValues[integer] = strs.get(start++);
@@ -272,7 +403,7 @@ public class DataGenerator implements Callable<Integer> {
         }
     }
 
-    public List<String> getDifferentStringFromChild(String currentStr, List<String> childStr, int num) {
+    public List<String> getDifferentStringFromChild(String currentStr, List<String> childStr, int num, String[] likeParas) {
         List<String> result = new ArrayList<>();
         char[] chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789".toCharArray();
         Random random = new Random();
@@ -327,14 +458,6 @@ public class DataGenerator implements Callable<Integer> {
     }
 
     public void changeParaNumAndRows() {
-//        for (int i = 0; i < InTypes.size(); i++) {
-//            System.out.println(InTypes.get(i).getRows());
-//        }
-//        for (int i = 0; i < LikeTypes.size(); i++) {
-//            System.out.println(LikeTypes.get(i).getRows());
-//        }
-//        System.out.println("shnkshs");
-        //
         for (int i = 0; i < InTypes.size(); i++) {
             long[] isPresent = paraPresent.get(i);
             long sum = Arrays.stream(isPresent).sum();
@@ -350,16 +473,5 @@ public class DataGenerator implements Callable<Integer> {
             }
             LikeTypes.get(i).setRows(String.valueOf(sum));
         }
-        //
-//        for (int i = 0; i < InTypes.size() + LikeTypes.size(); i++) {
-//            long[] isPresent = paraPresent.get(i);
-//            long sum = 0;
-//            for (int j = 0; j < isPresent.length; j++) {
-//                if (isPresent[j] == 1) {
-//                    sum += paraRows[j];
-//                }
-//            }
-//            System.out.println(sum);
-//        }
     }
 }

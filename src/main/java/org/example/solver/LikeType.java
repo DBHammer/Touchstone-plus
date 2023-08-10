@@ -48,4 +48,34 @@ public class LikeType {
     public void setRows(String percentage) {
         this.rows = percentage;
     }
+
+    public boolean isOnlyFrontMatch() {
+        if (frontMatch && !middleMatch && !behindMatch) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    public boolean isOnlyBehindMatch() {
+        if (!frontMatch && !middleMatch && behindMatch) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    public boolean isOnlyMiddleMatch() {
+        if (frontMatch && !middleMatch && behindMatch) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    public void setOnlyBehindMatch() {
+        this.behindMatch = true;
+        this.middleMatch = false;
+        this.frontMatch = false;
+    }
 }

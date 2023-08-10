@@ -1,35 +1,49 @@
 package org.example.generator;
 
+import org.example.solver.LikeType;
 import org.example.solver.TopoGraph;
-import org.example.utils.exception.MainException;
 
 import java.util.*;
 
 public class LikePatterGenerator {
     TopoGraph topoGraph;
+    List<LikeType> LikeTyps;
 
-    public LikePatterGenerator(TopoGraph topoGraph) {
+    public LikePatterGenerator(TopoGraph topoGraph, List<LikeType> likeTyps) {
         this.topoGraph = topoGraph;
+        LikeTyps = likeTyps;
     }
 
     public String[] getLikeParas() {
         String[] likeParas = new String[topoGraph.getV()];
-        HashSet<String> distinctLikeParas = new HashSet<>();
+        HashSet<String> distinctLikeParasInBehindMatch = new HashSet<>();
+        HashSet<String> distinctLikeParasInFrontMatch = new HashSet<>();
         Random random = new Random();
         char[] chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789".toCharArray();
         //统计入度
         int[] inNum = getInNum();
         for (int i = 0; i < inNum.length; i++) {
+            String likePara = String.valueOf(chars[random.nextInt(62)]);
             if (inNum[i] == 0) {
-                String likePara = String.valueOf(chars[random.nextInt(62)]);
-                while(distinctLikeParas.contains(likePara)){
-                    likePara = String.valueOf(chars[random.nextInt(62)]);
+                if (LikeTyps.get(i).isOnlyBehindMatch()) {
+                    while (distinctLikeParasInBehindMatch.contains(likePara)) {
+                        likePara = String.valueOf(chars[random.nextInt(62)]);
+                    }
+                    distinctLikeParasInBehindMatch.add(likePara);
+                    likeParas[i] = likePara;
+                    DFS(topoGraph, likeParas, i, chars);
                 }
-                distinctLikeParas.add(likePara);
-                likeParas[i] = likePara;
-                DFS(topoGraph, likeParas, i, chars);
+                if (LikeTyps.get(i).isOnlyFrontMatch()) {
+                    while (distinctLikeParasInFrontMatch.contains(likePara)) {
+                        likePara = String.valueOf(chars[random.nextInt(62)]);
+                    }
+                    distinctLikeParasInFrontMatch.add(likePara);
+                    likeParas[i] = likePara;
+                    DFS(topoGraph, likeParas, i, chars);
+                }
             }
         }
+
         return likeParas;
     }
 
@@ -37,10 +51,15 @@ public class LikePatterGenerator {
         Queue<Integer> allNextV = topoGraph.adj(i);
         Random random = new Random();
         String head = likeParas[i];
+        HashSet<String> distinctHeads = new HashSet<>();
         for (Integer integer : allNextV) {
             likeParas[integer] = "";
-            likeParas[integer] += head;
-            likeParas[integer] += String.valueOf(chars[random.nextInt(62)]);
+            String child = head + chars[random.nextInt(62)];
+            while (distinctHeads.contains(child)) {
+                child = head + chars[random.nextInt(62)];
+            }
+            distinctHeads.add(child);
+            likeParas[integer] = child;
             DFS(topoGraph, likeParas, integer, chars);
         }
     }

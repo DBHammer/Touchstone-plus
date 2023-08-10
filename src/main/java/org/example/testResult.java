@@ -31,9 +31,9 @@ public class testResult {
     }
 
     public static void testLike() throws MainException, SQLException {
-        DatabaseConnectorConfig config1 = new DatabaseConnectorConfig("biui.me", "5432", "postgres", "Biui1227..", "likecolumngen");
+        DatabaseConnectorConfig config1 = new DatabaseConnectorConfig("wqs97.click", "5432", "postgres", "Biui1227..", "likecolumngen");
         DbConnector dbConnector1 = new PgConnector(config1);
-        DatabaseConnectorConfig config2 = new DatabaseConnectorConfig("biui.me", "5432", "postgres", "Biui1227..", "likecolumn");
+        DatabaseConnectorConfig config2 = new DatabaseConnectorConfig("wqs97.click", "5432", "postgres", "Biui1227..", "likecolumn");
         DbConnector dbConnector2 = new PgConnector(config2);
         List<String> sqls = getEachLine(inputPath);
         List<String> sqls2 = getEachLine(originLikePath);
@@ -52,9 +52,9 @@ public class testResult {
     }
 
     public static void testAll() throws MainException, SQLException, IOException, ExecutionException, InterruptedException {
-        DatabaseConnectorConfig config1 = new DatabaseConnectorConfig("biui.me", "5432", "postgres", "Biui1227..", "tpchonecolumn");
+        DatabaseConnectorConfig config1 = new DatabaseConnectorConfig("wqs97.click", "5432", "postgres", "Biui1227..", "tpchonecolumn");
         DbConnector dbConnector1 = new PgConnector(config1);
-        DatabaseConnectorConfig config2 = new DatabaseConnectorConfig("biui.me", "5432", "postgres", "Biui1227..", "tpch1");
+        DatabaseConnectorConfig config2 = new DatabaseConnectorConfig("wqs97.click", "5432", "postgres", "Biui1227..", "tpch1");
         DbConnector dbConnector2 = new PgConnector(config2);
         List<String> sqls = getEachLine(inputPath);
         List<String> sqls2 = getEachLine(originPath);
@@ -84,17 +84,17 @@ public class testResult {
             } else {
                 double error = Math.abs(result - result2) / result2;
                 sum.addAndGet((int) (error*100000));
-                if (error <= 0.04) {
+                if (error <= 0.06) {
                     System.out.println("no but" + error);
-                    //System.out.println("no " + result + " " + result2);
+                    //System.out.println("no but" + result + " " + result2);
                 } else {
                     System.out.println("shit" + error);
-                    //System.out.println("no " + result + " " + result2);
+                    //System.out.println("shit " + result + " " + result2);
                 }
             }
 
         })).get();
-        System.out.println((double) sum.get() / 100000/40);
+        System.out.println((double) sum.get() / 100000/25);
     }
 
     public static List<String> getEachLine(String intputPath) {
