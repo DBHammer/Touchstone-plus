@@ -4,7 +4,6 @@ import org.chocosolver.solver.Model;
 import org.chocosolver.solver.ParallelPortfolio;
 import org.chocosolver.solver.variables.IntVar;
 import org.chocosolver.solver.variables.Variable;
-import org.chocosolver.solver.variables.impl.BitsetArrayIntVarImpl;
 import org.example.dbconnector.DbConnector;
 import org.example.dbconnector.adapter.PgConnector;
 import org.example.utils.CommonUtils;
@@ -13,6 +12,8 @@ import org.example.utils.exception.MainException;
 import picocli.CommandLine;
 
 import java.io.*;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.sql.SQLException;
 import java.util.*;
 import java.util.concurrent.Callable;
@@ -51,22 +52,23 @@ public class EquationSolver implements Callable<Integer> {
         List<String> allLikeParasValueUpperBound = getLikeParaValueUpperBound(LikeTypes);
         List<String> allParasValueUpperBound = new ArrayList<>(allInParasValueUpperBound);
         allParasValueUpperBound.addAll(allLikeParasValueUpperBound);
-        double denominator = cutDomainInOneError(allParasValueUpperBound, error);
+        BigDecimal denominator = cutDomainInOneError(allParasValueUpperBound, error);
         int allDistinctParaInCol = dbConnector.getAllDistinctString(colName, tableName).size();
         TopoGraph topoGraphs = getTopoGraphs(eachLine, LikeTypes);
-        solve(InTypes, LikeTypes, config.getOutputDirectory(), dbConnector, topoGraphs, allInParasValueUpperBound, allDistinctParaInCol, denominator);
+        solve(InTypes, LikeTypes, config.getOutputDirectory(), dbConnector, topoGraphs, allInParasValueUpperBound, allParasValueUpperBound, allDistinctParaInCol, denominator);
         return 0;
     }
 
     public void solve(List<InType> InTypes, List<LikeType> LikeTypes, String outputPath, DbConnector dbConnector,
-                      TopoGraph topoGraph, List<String> allInParasValueUpperBound, int allDistinctParaInCol, double denominator) throws IOException, SQLException, MainException {
+                      TopoGraph topoGraph, List<String> allInParasValueUpperBound, List<String> allParasValueUpperBound, int allDistinctParaInCol, BigDecimal denominator) throws IOException, SQLException, MainException {
         if (!InTypes.isEmpty() || !LikeTypes.isEmpty()) {
             //求方程个数
             int n = allInParasValueUpperBound.size();
+
             if (!LikeTypes.isEmpty()) {
                 n += LikeTypes.size();
             }
-            List<String> allParasValueUpperBound = getParaValueUpperBound(allInParasValueUpperBound, LikeTypes);
+            //List<String> allParasValueUpperBound = getParaValueUpperBound(allInParasValueUpperBound, LikeTypes);
             if (n > allDistinctParaInCol) {
                 n = allDistinctParaInCol;
             }
@@ -90,7 +92,7 @@ public class EquationSolver implements Callable<Integer> {
                     sum += Long.parseLong(allParasValueUpperBound.get(i));
                 }
                 double avg = (double) (sum / groupSize);
-                newAllParaValueUpperBound.add(String.valueOf((int) (avg + 1)));
+                newAllParaValueUpperBound.add(String.valueOf((int) (avg)));
                 left = left + groupSize;
             }
             long sum = 0;
@@ -102,7 +104,7 @@ public class EquationSolver implements Callable<Integer> {
                 lastGroupSize = groupSize;
             }
             double avg = (double) (sum / lastGroupSize);
-            newAllParaValueUpperBound.add(String.valueOf((int) (avg + 1)));
+            newAllParaValueUpperBound.add(String.valueOf((int) (avg)));
             allParasValueUpperBound.clear();
             allParasValueUpperBound.addAll(newAllParaValueUpperBound);
 
@@ -184,7 +186,7 @@ public class EquationSolver implements Callable<Integer> {
 
     public Model makeModel(List<InType> InTypes, List<LikeType> LikeTypes, int n, int originN,
                            long nullRows, long tableSize, TopoGraph topoGraph, List<String> allParasValueUpperBound,
-                           double denominator) {
+                           BigDecimal denominator) {
         //构造in类型和like类型的方程
         Model model = new Model();
         IntVar[] allParaRows = new IntVar[n];
@@ -208,7 +210,6 @@ public class EquationSolver implements Callable<Integer> {
             x[n - 1] = lastOne;
             isPercentVector.add(x);
         }
-        String op = "="; // among ">=", ">", "<=", "<", "="
         List<IntVar[]> vectorMuls = new ArrayList<>();
         for (int i = 0; i < InTypes.size() + LikeTypes.size(); i++) {
             IntVar[] vectorMul = new IntVar[n];
@@ -220,17 +221,15 @@ public class EquationSolver implements Callable<Integer> {
             }
         }
         //对null值的处理
-        long notNullRows = tableSize - nullRows;
+        int notNullRows = BigDecimal.valueOf(tableSize - nullRows).divide(denominator, 6, RoundingMode.UP).intValue();
         int[] groupRows = new int[n];
         for (int i = 0; i < n - 1; i++) {
             groupRows[i] = groupSize;
         }
         groupRows[n - 1] = lastGroupSize;
-        model.scalar(allParaRows, groupRows, "<=", (int) notNullRows).post();
-        //model.sum(allParaRows, "<=", (int) notNullRows).post();
+        model.scalar(allParaRows, groupRows, "<=", notNullRows).post();
         for (int i = 0; i < InTypes.size(); i++) {
             int paraNum = InTypes.get(i).getParaNum();
-            //model.sum(isPercentVector.get(i), "=", paraNum).post();
             int up, down;
             if (paraNum == 1) {
                 up = 3;
@@ -250,38 +249,44 @@ public class EquationSolver implements Callable<Integer> {
                 strRows = LikeTypes.get(i - InTypes.size()).getRows();
             }
             int intRows = Integer.parseInt(strRows);
-            intRows = (int) (intRows / denominator);
+            //intRows = BigDecimal.valueOf(intRows).divide(denominator, 6, RoundingMode.UP).intValue();
+            int[] denominators = new int[vectorMuls.get(0).length];
+            Arrays.fill(denominators, denominator.intValue());
             int up = (int) (1.06 * intRows);
             int down = (int) (0.94 * intRows);
-            model.sum(vectorMuls.get(i), "<=", (int) (Math.round(1.05 * intRows))).post();
-            model.sum(vectorMuls.get(i), ">=", (int) (Math.round(0.95 * intRows))).post();
+//            model.sum(vectorMuls.get(i), "<=", (int) (Math.round(1.06 * intRows))).post();
+//            model.sum(vectorMuls.get(i), ">=", (int) (Math.round(0.94 * intRows))).post();
+            model.scalar(vectorMuls.get(i), denominators, "<=", (int) (Math.round(1.06 * intRows))).post();
+            model.scalar(vectorMuls.get(i), denominators, ">=", (int) (Math.round(0.94 * intRows))).post();
+
         }
         //建模like中的包含和互斥关系
         //思路是使用层序遍历的方法，对每一层的同父节点添加互斥约束，父节点与子节点添加包含约束
         int[] zeroInNum = topoGraph.getInZero();
         //从a%或者%a开始，暂时不考虑那些属于%a%的情况
-        int rootNum = 0;
-        for (int i = 0; i < zeroInNum.length; i++) {
-            if (!LikeTypes.get(zeroInNum[i]).isOnlyBehindMatch()&&!LikeTypes.get(zeroInNum[i]).isOnlyFrontMatch()) {
-                zeroInNum[i] = -2;
-            } else {
-                rootNum++;
-            }
-        }
-        int[] rootNodes = new int[rootNum];
+//        int rootNum = 0;
+//        for (int i = 0; i < zeroInNum.length; i++) {
+//            if (!LikeTypes.get(zeroInNum[i]).isOnlyBehindMatch()&&!LikeTypes.get(zeroInNum[i]).isOnlyFrontMatch()) {
+//                zeroInNum[i] = -2;
+//            } else {
+//                rootNum++;
+//            }
+//        }
+//        int[] rootNodes = new int[rootNum];
+        int[] rootNodes = new int[zeroInNum.length];
         List<Integer> frontRootNodes = new ArrayList<>();
         List<Integer> behindRootNodes = new ArrayList<>();
         int j = 0;
         for (int k : zeroInNum) {
-            if (k != -2) {
-                rootNodes[j++] = k;
-                if (isFrontMatch(k, LikeTypes)) {
-                    frontRootNodes.add(k);
-                }
-                if (isBehindMatch(k, LikeTypes)) {
-                    behindRootNodes.add(k);
-                }
+            //if (k != -2) {
+            rootNodes[j++] = k;
+            if (isFrontMatch(k, LikeTypes)) {
+                frontRootNodes.add(k);
             }
+            if (!isFrontMatch(k, LikeTypes)) {
+                behindRootNodes.add(k);
+            }
+            //}
         }
         //只对同是前缀匹配和后缀匹配的root节点做互斥约束
         int[] frontRootNodesArray = frontRootNodes.stream().mapToInt(Integer::intValue).toArray();
@@ -299,11 +304,12 @@ public class EquationSolver implements Callable<Integer> {
             addInclusivePredicate(model, cur, topoGraph, isPercentVector, InTypes.size());
             vec.addAll(cursNeighbor);
         }
-
-
         return model;
     }
 
+    /**
+     * 对既不是前项匹配又不是后项匹配的约束，与其他约束设定为要么包含，要么互斥的约束
+     */
     /**
      * 判断序号为i的拓扑图中的点是否只为前项匹配式
      */
@@ -538,7 +544,7 @@ public class EquationSolver implements Callable<Integer> {
                 addNode2Topograph(topoGraph, i, LikeTypes, rootNodes);
                 hasAdded.add(i);
                 //插入到树后，除了前缀约束的约束全部看作后缀约束
-                LikeTypes.get(i).setOnlyBehindMatch();
+                //LikeTypes.get(i).setOnlyBehindMatch();
             }
         }
         return topoGraph;
@@ -556,24 +562,24 @@ public class EquationSolver implements Callable<Integer> {
     }
 
     public void addNode2Topograph(TopoGraph topoGraph, int i, List<LikeType> LikeTypes, int[] rootNodes) {
-        int minDepth = Integer.MAX_VALUE;
-        int minDepthNode = Integer.MIN_VALUE;
+        int maxDepth = Integer.MIN_VALUE;
+        int maxDepthNode = Integer.MIN_VALUE;
         //todo 仔细考虑没有后缀匹配的情况
         for (int j = 0; j < rootNodes.length; j++) {
             if (!LikeTypes.get(rootNodes[j]).isOnlyFrontMatch()) {
                 int topoDepth = getTopoDepth(topoGraph, rootNodes[j]);
-                if (topoDepth < minDepth) {
-                    minDepth = topoDepth;
-                    minDepthNode = rootNodes[j];
+                if (topoDepth > maxDepth) {
+                    maxDepth = topoDepth;
+                    maxDepthNode = rootNodes[j];
                 }
             }
         }
         long rows = Long.parseLong(LikeTypes.get(i).getRows());
-        long rootNodeRows = Long.parseLong(LikeTypes.get(minDepthNode).getRows());
+        long rootNodeRows = Long.parseLong(LikeTypes.get(maxDepthNode).getRows());
         if (rows > rootNodeRows) {
-            topoGraph.addEdge(i, minDepthNode);
+            topoGraph.addEdge(i, maxDepthNode);
         } else {
-            Map<String, Integer> addPosition = getAddPositionDFS(topoGraph, minDepthNode, i, LikeTypes);
+            Map<String, Integer> addPosition = getAddPositionDFS(topoGraph, maxDepthNode, i, LikeTypes);
             int left = addPosition.get("left");
             int right = addPosition.get("right");
             if (right != Integer.MIN_VALUE) {
@@ -600,13 +606,13 @@ public class EquationSolver implements Callable<Integer> {
             for (Integer child : children) {
                 allChildRows += Long.parseLong(LikeTypes.get(child).getRows());
             }
+            if (addNodeRows < rootRows - allChildRows) {
+                addPosition.put("left", rootNode);
+                addPosition.put("right", Integer.MIN_VALUE);
+            }
             for (Integer child : children) {
                 long childRows = Long.parseLong(LikeTypes.get(child).getRows());
-                if (addNodeRows < allChildRows) {
-                    addPosition.put("left", rootNode);
-                    addPosition.put("right", Integer.MIN_VALUE);
-                    break;
-                } else if (addNodeRows > childRows) {
+                if (addNodeRows > childRows) {
                     addPosition.put("left", rootNode);
                     addPosition.put("right", child);
                     break;
@@ -741,16 +747,6 @@ public class EquationSolver implements Callable<Integer> {
         return paraValueUpperBound;
     }
 
-    public List<String> getParaValueUpperBound(List<String> allInParaValueUpperBound, List<LikeType> likeTypes) {
-        List<String> allParaValueUpperBound = new ArrayList<>();
-        allParaValueUpperBound.addAll(allInParaValueUpperBound);
-        for (LikeType likeType : likeTypes) {
-            //todo 找到一个更适合的值
-            allParaValueUpperBound.add(likeType.getRows() + 1);
-        }
-        return allParaValueUpperBound;
-    }
-
     public HashSet<String> getDistinctParasInIntypes(List<String> eachLine) {
         HashSet<String> alldistinct = new HashSet<>();
         for (int i = 0; i < eachLine.size(); i++) {
@@ -762,7 +758,7 @@ public class EquationSolver implements Callable<Integer> {
         return alldistinct;
     }
 
-    public double cutDomainInOneError(List<String> allParasValueUpperBound, double error) {
+    public BigDecimal cutDomainInOneError(List<String> allParasValueUpperBound, double error) {
         long min = MaxRow;
         if (error != 0) {
             for (String s : allParasValueUpperBound) {
@@ -771,18 +767,18 @@ public class EquationSolver implements Callable<Integer> {
                     min = currentRow;
                 }
             }
-            double denominator = min * error;
+            BigDecimal denominator = BigDecimal.valueOf(min * error);
             List<String> newParaBound = new ArrayList<>();
             for (int i = 0; i < allParasValueUpperBound.size(); i++) {
                 long currentRow = Long.parseLong(allParasValueUpperBound.get(i));
-                long newRow = (long) (currentRow / denominator);
+                long newRow = BigDecimal.valueOf(currentRow).divide(denominator, 6, RoundingMode.UP).longValue();//(currentRow / denominator);
                 newParaBound.add(String.valueOf(newRow));
             }
             allParasValueUpperBound.clear();
             allParasValueUpperBound.addAll(newParaBound);
             return denominator;
         } else {
-            return 1.0;
+            return new BigDecimal("1.0");
         }
     }
 

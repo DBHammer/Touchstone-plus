@@ -52,7 +52,10 @@ public class SqlWriter {
                 String eachLine = tableName + "." + colName + " like " + "'%" + reverseString + "'";
                 bw.write(eachLine + System.lineSeparator());
             } else {
-                throw new MainException("暂时不支持的情况");
+                //throw new MainException("暂时不支持的情况");
+                String likePattern = likeParaValues[i];
+                String eachLine = tableName + "." + colName + " like " + "'%" + likeParaValues[i] + "%'";
+                bw.write(eachLine + System.lineSeparator());
             }
         }
         bw.close();

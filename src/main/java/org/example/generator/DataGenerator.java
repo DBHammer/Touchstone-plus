@@ -208,7 +208,7 @@ public class DataGenerator implements Callable<Integer> {
     public boolean canBeTopo(int i, int j) {
         if (LikeTypes.get(i).isOnlyFrontMatch() && LikeTypes.get(j).isOnlyFrontMatch()) {
             return true;
-        } else if (LikeTypes.get(i).isOnlyBehindMatch() && LikeTypes.get(j).isOnlyBehindMatch()) {
+        } else if (!LikeTypes.get(i).isOnlyFrontMatch() && !LikeTypes.get(j).isOnlyFrontMatch()) {
             return true;
         } else {
             return false;
@@ -244,7 +244,7 @@ public class DataGenerator implements Callable<Integer> {
         String[] allFrontParaValues = new String[paraRows.length];
         String[] allBehindParaValues = new String[paraRows.length];
         for (int i = 0; i < entry.length; i++) {
-            if (entry[i] == 0 && LikeTypes.get(i).isOnlyBehindMatch()) {
+            if (entry[i] == 0 && !LikeTypes.get(i).isOnlyFrontMatch()) {
                 giveValue2LikeParas(allFrontParaValues, likeParas, topoGraph, i, inSum);
             }
             if (entry[i] == 0 && LikeTypes.get(i).isOnlyFrontMatch()) {
@@ -317,7 +317,7 @@ public class DataGenerator implements Callable<Integer> {
             //为后缀式%a对应的前缀式补全与之前前缀式不同的前缀，防止冲突
             List<String> allHeadExist = new ArrayList<>();
             for (int i = 0; i < likeParas.length; i++) {
-                if (LikeTypes.get(i).isOnlyBehindMatch() && entry[i] == 0) {
+                if (!LikeTypes.get(i).isOnlyFrontMatch() && entry[i] == 0) {
                     allHeadExist.add(likeParas[i]);
                 }
             }

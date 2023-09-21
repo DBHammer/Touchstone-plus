@@ -3,11 +3,8 @@ package org.example.solver;
 public class LikeType {
 
     public boolean frontMatch;
-
     public boolean middleMatch;
-
     public boolean behindMatch;
-
     public String rows;
 
     public LikeType(boolean frontMatch, boolean middleMatch, boolean behindMatch, String rows) {
