@@ -8,7 +8,7 @@ import java.util.*;
 public class LikePatterGenerator {
     TopoGraph topoGraph;
     List<LikeType> LikeTyps;
-    char[] chars = "abcdefghijklmnopqrstuvwxyz0123456789".toCharArray();
+    char[] chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789".toCharArray();
     char[] level = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".toCharArray();
 
     public LikePatterGenerator(TopoGraph topoGraph, List<LikeType> likeTyps) {
@@ -21,18 +21,17 @@ public class LikePatterGenerator {
         HashSet<String> distinctLikeParasInBehindMatch = new HashSet<>();
         HashSet<String> distinctLikeParasInFrontMatch = new HashSet<>();
         Random random = new Random();
-        //char[] chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789".toCharArray();
 
         //统计入度
         int[] inNum = getInNum();
         //得到每个节点的深度
         int[] allNodeDepth = getDepthOfAllNode();
         for (int i = 0; i < inNum.length; i++) {
-            String likePara = String.valueOf(chars[random.nextInt(36)]);
+            String likePara = String.valueOf(chars[random.nextInt(62)]);
             if (inNum[i] == 0) {
                 if (!LikeTyps.get(i).isOnlyFrontMatch()) {
                     while (distinctLikeParasInBehindMatch.contains(likePara)) {
-                        likePara = String.valueOf(chars[random.nextInt(36)]);
+                        likePara = String.valueOf(chars[random.nextInt(62)]);
                     }
                     distinctLikeParasInBehindMatch.add(likePara);
                     likeParas[i] = level[allNodeDepth[i]] + likePara;
@@ -40,7 +39,7 @@ public class LikePatterGenerator {
                 }
                 if (LikeTyps.get(i).isOnlyFrontMatch()) {
                     while (distinctLikeParasInFrontMatch.contains(likePara)) {
-                        likePara = String.valueOf(chars[random.nextInt(36)]);
+                        likePara = String.valueOf(chars[random.nextInt(62)]);
                     }
                     distinctLikeParasInFrontMatch.add(likePara);
                     likeParas[i] = level[allNodeDepth[i]] + likePara;
@@ -59,10 +58,10 @@ public class LikePatterGenerator {
         HashSet<String> distinctHeads = new HashSet<>();
         for (Integer integer : allNextV) {
             likeParas[integer] = "";
-            char body = chars[random.nextInt(36)];
+            char body = chars[random.nextInt(62)];
             String child = String.valueOf(body);
             while (distinctHeads.contains(child)) {
-                child = String.valueOf(chars[random.nextInt(36)]);
+                child = String.valueOf(chars[random.nextInt(62)]);
             }
             distinctHeads.add(child);
             likeParas[integer] = head + level[allNodeDepth[integer]] + child;

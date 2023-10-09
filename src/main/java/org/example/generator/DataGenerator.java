@@ -252,12 +252,12 @@ public class DataGenerator implements Callable<Integer> {
             }
         }
         combinateParaValues(likeParas, allParaValues, allFrontParaValues, allBehindParaValues, entry);
+        int start = 0;
         for (int i = 0; i < allParaValues.length; i++) {
             if (allParaValues[i].isEmpty()) {
-                allParaValues[i] = inParas[inSum++];
+                allParaValues[i] = inParas[start++];
             }
         }
-        int start = 0;
         for (int i = 0; i < allParaValues.length; i++) {
             if (allParaValues[i] == null) {
                 allParaValues[i] = inParas[start++];

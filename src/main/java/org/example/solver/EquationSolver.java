@@ -2,6 +2,7 @@ package org.example.solver;
 
 import org.chocosolver.solver.Model;
 import org.chocosolver.solver.ParallelPortfolio;
+import org.chocosolver.solver.constraints.ternary.PropTimesNaive;
 import org.chocosolver.solver.variables.IntVar;
 import org.chocosolver.solver.variables.Variable;
 import org.example.dbconnector.DbConnector;
@@ -186,12 +187,16 @@ public class EquationSolver implements Callable<Integer> {
 
     public Model makeModel(List<InType> InTypes, List<LikeType> LikeTypes, int n, int originN,
                            long nullRows, long tableSize, TopoGraph topoGraph, List<String> allParasValueUpperBound,
-                           BigDecimal denominator) {
+                           BigDecimal denominator) throws MainException {
         //构造in类型和like类型的方程
         Model model = new Model();
         IntVar[] allParaRows = new IntVar[n];
         for (int i = 0; i < n; i++) {
-            IntVar eachPara = model.intVar("para" + i, 0, Integer.parseInt(allParasValueUpperBound.get(i)));
+            int upperbound = Integer.parseInt(allParasValueUpperBound.get(i));
+//            if (upperbound < 70) {
+//                upperbound = 70;
+//            }
+            IntVar eachPara = model.intVar("para" + i, 0, upperbound+10);
             allParaRows[i] = eachPara;
         }
         List<IntVar[]> isPercentVector = new ArrayList<>();
@@ -212,12 +217,19 @@ public class EquationSolver implements Callable<Integer> {
         }
         List<IntVar[]> vectorMuls = new ArrayList<>();
         for (int i = 0; i < InTypes.size() + LikeTypes.size(); i++) {
+            //IntVar[] vectorMul = model.intVarArray("mul", n, 0, getLargestUpperBound(allParasValueUpperBound));
             IntVar[] vectorMul = new IntVar[n];
+            for (int j = 0; j < n; j++) {
+                int upperbound = Integer.parseInt(allParasValueUpperBound.get(j));
+                IntVar eachMulPara = model.intVar("mulPara" + j, 0, upperbound+10);
+                vectorMul[j] = eachMulPara;
+            }
             vectorMuls.add(vectorMul);
         }
         for (int i = 0; i < InTypes.size() + LikeTypes.size(); i++) {
             for (int j = 0; j < n; j++) {
-                vectorMuls.get(i)[j] = allParaRows[j].mul(isPercentVector.get(i)[j]).intVar();
+                //vectorMuls.get(i)[j] = allParaRows[j].mul(isPercentVector.get(i)[j]).intVar();
+                model.times(allParaRows[j], isPercentVector.get(i)[j], vectorMuls.get(i)[j]).post();
             }
         }
         //对null值的处理
@@ -252,13 +264,11 @@ public class EquationSolver implements Callable<Integer> {
             //intRows = BigDecimal.valueOf(intRows).divide(denominator, 6, RoundingMode.UP).intValue();
             int[] denominators = new int[vectorMuls.get(0).length];
             Arrays.fill(denominators, denominator.intValue());
-            int up = (int) (1.06 * intRows);
-            int down = (int) (0.94 * intRows);
-//            model.sum(vectorMuls.get(i), "<=", (int) (Math.round(1.06 * intRows))).post();
-//            model.sum(vectorMuls.get(i), ">=", (int) (Math.round(0.94 * intRows))).post();
-            model.scalar(vectorMuls.get(i), denominators, "<=", (int) (Math.round(1.06 * intRows))).post();
-            model.scalar(vectorMuls.get(i), denominators, ">=", (int) (Math.round(0.94 * intRows))).post();
-
+            //model.sum(vectorMuls.get(i), "=", intRows).post();
+//            model.scalar(vectorMuls.get(i), denominators, "<=", (int) (Math.round(1.05 * intRows))).post();
+//            model.scalar(vectorMuls.get(i), denominators, ">=", (int) (Math.round(0.95 * intRows))).post();
+            model.sum(vectorMuls.get(i), "<=", (int) (Math.round(1.05 * intRows))).post();
+            model.sum(vectorMuls.get(i), ">=", (int) (Math.round(0.95 * intRows))).post();
         }
         //建模like中的包含和互斥关系
         //思路是使用层序遍历的方法，对每一层的同父节点添加互斥约束，父节点与子节点添加包含约束
@@ -483,13 +493,13 @@ public class EquationSolver implements Callable<Integer> {
 
     public String getColName(List<String> eachLine) {
         String firstCol = eachLine.get(0);
-        if (firstCol.contains("in") || firstCol.contains("IN")) {
+        if (firstCol.contains(" in ") || firstCol.contains(" IN ")) {
             String[] strs = firstCol.split(" in ");
             if (strs.length == 0) {
                 strs = firstCol.split(" IN ");
             }
             return strs[0].trim().split("\\.")[1];
-        } else if (firstCol.contains("like") || firstCol.contains("LIKE")) {
+        } else if (firstCol.contains(" like ") || firstCol.contains(" LIKE ")) {
             String[] strs = firstCol.split(" like ");
             if (strs.length == 0) {
                 strs = firstCol.split(" LIKE ");
@@ -828,26 +838,28 @@ public class EquationSolver implements Callable<Integer> {
             }
             expandPresentVector.add(eachExpandInTypePresent.stream().mapToLong(t -> t).toArray());
         }
-        ParallelPortfolio portfolio = new ParallelPortfolio();
-        for (int s = 0; s < nbModels; s++) {
-            portfolio.addModel(makeModelForLikeType(likeTypePresent, lastGroupSize, topoGraph, LikeTypes));
-        }
-        long a = System.currentTimeMillis();
-        if (portfolio.solve()) {
-            System.out.println("second_time:" + (System.currentTimeMillis() - a));
-            Variable[] vars = portfolio.getBestModel().getVars();
-            int start = 0;
-            for (int i = 0; i < likeTypeSize; i++) {
-                long[] eachVector = new long[n];
-                for (int j = 0; j < n; j++) {
-                    String eachPara = vars[start++].toString().split("=")[1].trim();
-                    eachVector[j] = Long.parseLong(eachPara);
-                }
-                expandPresentVector.add(eachVector);
+        if (!LikeTypes.isEmpty()) {
+            ParallelPortfolio portfolio = new ParallelPortfolio();
+            for (int s = 0; s < nbModels; s++) {
+                portfolio.addModel(makeModelForLikeType(likeTypePresent, lastGroupSize, topoGraph, LikeTypes));
             }
-            //System.out.println(vars);
-        } else {
-            System.out.println("The solver has proved the problem has no solution");
+            long a = System.currentTimeMillis();
+            if (portfolio.solve()) {
+                System.out.println("second_time:" + (System.currentTimeMillis() - a));
+                Variable[] vars = portfolio.getBestModel().getVars();
+                int start = 0;
+                for (int i = 0; i < likeTypeSize; i++) {
+                    long[] eachVector = new long[n];
+                    for (int j = 0; j < n; j++) {
+                        String eachPara = vars[start++].toString().split("=")[1].trim();
+                        eachVector[j] = Long.parseLong(eachPara);
+                    }
+                    expandPresentVector.add(eachVector);
+                }
+                //System.out.println(vars);
+            } else {
+                System.out.println("The solver has proved the problem has no solution");
+            }
         }
         return expandPresentVector;
     }
@@ -946,6 +958,24 @@ public class EquationSolver implements Callable<Integer> {
                     model.arithm(iMulJ[i2], "=", childVector[i2]).post();
                 }
             }
+        }
+    }
+
+    //取最大上界
+    public int getLargestUpperBound(List<String> upperBounds) throws MainException {
+        if (upperBounds.isEmpty()) {
+            throw new MainException("上界表为空");
+        } else {
+            // 初始化最大值为列表中的第一个元素
+            int maxValue = Integer.parseInt(upperBounds.get(0));
+
+            // 遍历列表，找到最大值
+            for (String str : upperBounds) {
+                if (Integer.parseInt(str) > maxValue) {
+                    maxValue = Integer.parseInt(str);
+                }
+            }
+            return maxValue;
         }
     }
 }
