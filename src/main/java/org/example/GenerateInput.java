@@ -5,10 +5,7 @@ import org.example.dbconnector.DbConnector;
 import org.example.dbconnector.adapter.PgConnector;
 import org.example.utils.exception.MainException;
 
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
+import java.io.*;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.sql.SQLException;
@@ -22,8 +19,9 @@ public class GenerateInput {
     public static String likeQueryPath = "D:\\eclipse-workspace\\multiStirngMatching\\conf\\likeQuery.txt";
 
     public static void main(String[] args) throws MainException, SQLException, IOException {
-        generateForExperiment();
-        //generateInTypeAndLikeType();
+        //constructSF();
+        //generateForExperiment();
+        generateInTypeAndLikeType();
         //generateInTypeCol();
         //generateLikeTypeCol();
         //writeLikeQuery();
@@ -121,11 +119,19 @@ public class GenerateInput {
         //对tpch里part表的p_type列生成随机的in约束
         DatabaseConnectorConfig config1 = new DatabaseConnectorConfig("wqs97.click", "5432", "postgres", "Biui1227..", "tpch1");
         DbConnector dbConnector1 = new PgConnector(config1);
+        DatabaseConnectorConfig config2 = new DatabaseConnectorConfig("wqs97.click", "5432", "postgres", "Biui1227..", "tpch2");
+        DbConnector dbConnector2 = new PgConnector(config2);
+        DatabaseConnectorConfig config3 = new DatabaseConnectorConfig("wqs97.click", "5432", "postgres", "Biui1227..", "tpch3");
+        DbConnector dbConnector3 = new PgConnector(config3);
         List<String> allDistinctPara = dbConnector1.getAllDistinctString("p_type", "part");
-        int tableSize = dbConnector1.getTableSize("part");
+        int tableSize1 = dbConnector1.getTableSize("part");
         Random r = new Random();
-        FileWriter fw = new FileWriter(new File(inputPath));
-        BufferedWriter bw = new BufferedWriter(fw);
+        FileWriter fw1 = new FileWriter(new File(inputPath));
+        BufferedWriter bw1 = new BufferedWriter(fw1);
+        FileWriter fw2 = new FileWriter(new File(inputPath.split("\\.")[0] + "2.txt"));
+        BufferedWriter bw2 = new BufferedWriter(fw2);
+        FileWriter fw3 = new FileWriter(new File(inputPath.split("\\.")[0] + "3.txt"));
+        BufferedWriter bw3 = new BufferedWriter(fw3);
         //生成in语句
         for (int i = 0; i < 0; i++) {
             Collections.shuffle(allDistinctPara);
@@ -136,13 +142,25 @@ public class GenerateInput {
                 sql.append("'").append(eachIn.trim()).append("', ");
             }
             sql = new StringBuilder(sql.substring(0, sql.length() - 2) + ");");
-            int outputCount = dbConnector1.getSqlResult(sql.toString());
-            StringBuilder eachline = new StringBuilder("part.p_type in (");
+            int outputCount1 = dbConnector1.getSqlResult(sql.toString());
+            //同时计算SF1-3的行数
+            int outputCount2 = dbConnector2.getSqlResult(sql.toString());
+            int outputCount3 = dbConnector3.getSqlResult(sql.toString());
+            StringBuilder eachline1 = new StringBuilder("part.p_type in (");
+            StringBuilder eachline2 = new StringBuilder("part.p_type in (");
+            StringBuilder eachline3 = new StringBuilder("part.p_type in (");
             for (String eachIn : eachInList) {
-                eachline.append("'").append(eachIn.trim()).append("'").append(", ");
+                eachline1.append("'").append(eachIn.trim()).append("'").append(", ");
+                eachline2.append("'").append(eachIn.trim()).append("'").append(", ");
+                eachline3.append("'").append(eachIn.trim()).append("'").append(", ");
             }
-            eachline = new StringBuilder(eachline.substring(0, eachline.length() - 2) + ") = " + outputCount);
-            bw.write(eachline + System.lineSeparator());
+            //同时写SF1-3的负载
+            eachline1 = new StringBuilder(eachline1.substring(0, eachline1.length() - 2) + ") = " + outputCount1);
+            eachline2 = new StringBuilder(eachline2.substring(0, eachline2.length() - 2) + ") = " + outputCount2);
+            eachline3 = new StringBuilder(eachline3.substring(0, eachline3.length() - 2) + ") = " + outputCount3);
+            bw1.write(eachline1 + System.lineSeparator());
+            bw2.write(eachline2 + System.lineSeparator());
+            bw3.write(eachline3 + System.lineSeparator());
         }
 
         //得到p_type列所有的开头，中间和尾部
@@ -173,61 +191,66 @@ public class GenerateInput {
         HashSet<Integer> chosenStart = new HashSet<>();
         HashSet<Integer> chosenMid = new HashSet<>();
         HashSet<Integer> chosenTail = new HashSet<>();
-        for (int i = 0; i < 15; i++) {
+        for (int i = 0; i < 50; i++) {
             //随机选择一个开头
-            int likeStart = r.nextInt(30);
+            int likeStart = r.nextInt(0, 50);
             while (chosenStart.contains(likeStart)) {
-                likeStart = r.nextInt(30);
+                likeStart = r.nextInt(0, 50);
             }
             chosenStart.add(likeStart);
 
             String likeSqlPara = "part.p_type like ";
             StringBuilder likeSql = new StringBuilder("select count(*) from part where p_type like");
-            String likePara = allDistinctHead.stream().toList().get(likeStart);
+            String likePara = allDistinctPara.get(likeStart);
             likeSql.append(" '").append(likePara).append("%'");
             int outputCount = dbConnector1.getSqlResult(likeSql.toString());
             likeSql.append(" = ").append(outputCount);
             likeSqlPara = likeSqlPara + "'" + likePara + "%' = " + outputCount;
-            bw.write(likeSqlPara + System.lineSeparator());
+            bw1.write(likeSqlPara + System.lineSeparator());
         }
         for (int i = 0; i < 0; i++) {
             //随机选择一个中间
-            int likeMid = r.nextInt(5);
+            int likeMid = r.nextInt(50, 100);
             while (chosenMid.contains(likeMid)) {
-                likeMid = r.nextInt(5);
+                likeMid = r.nextInt(50, 100);
             }
             chosenMid.add(likeMid);
 
 
             String likeSqlPara = "part.p_type like ";
             StringBuilder likeSql = new StringBuilder("select count(*) from part where p_type like");
-            String likePara = allDistinctMid.stream().toList().get(likeMid);
+            String likePara = allDistinctPara.get(likeMid);
             likeSql.append(" '").append("%").append(likePara).append("%'");
             int outputCount = dbConnector1.getSqlResult(likeSql.toString());
             likeSql.append(" = ").append(outputCount);
             likeSqlPara = likeSqlPara + "'" + "%" + likePara + "%' = " + outputCount;
-            bw.write(likeSqlPara + System.lineSeparator());
+            bw1.write(likeSqlPara + System.lineSeparator());
         }
         for (int i = 0; i < 0; i++) {
             //随机选择一个结尾
-            int likeTail = r.nextInt(25);
+            int likeTail = r.nextInt(100, 150);
             while (chosenTail.contains(likeTail)) {
-                likeTail = r.nextInt(25);
+                likeTail = r.nextInt(100, 150);
             }
             chosenTail.add(likeTail);
 
 
             String likeSqlPara = "part.p_type like ";
             StringBuilder likeSql = new StringBuilder("select count(*) from part where p_type like");
-            String likePara = allDistinctTail.stream().toList().get(likeTail);
+            String likePara = allDistinctPara.get(likeTail);
             likeSql.append(" '").append("%").append(likePara).append("'");
             int outputCount = dbConnector1.getSqlResult(likeSql.toString());
             likeSql.append(" = ").append(outputCount);
             likeSqlPara = likeSqlPara + "'%" + likePara + "' = " + outputCount;
-            bw.write(likeSqlPara + System.lineSeparator());
+            bw1.write(likeSqlPara + System.lineSeparator());
         }
-        bw.close();
-        fw.close();
+        bw1.close();
+        fw1.close();
+
+        bw2.close();
+        fw2.close();
+        bw3.close();
+        fw3.close();
     }
 
 
@@ -236,12 +259,13 @@ public class GenerateInput {
         DatabaseConnectorConfig config1 = new DatabaseConnectorConfig("wqs97.click", "5432", "postgres", "Biui1227..", "tpcds");
         DbConnector dbConnector1 = new PgConnector(config1);
         List<String> allDistinctPara = dbConnector1.getAllDistinctString("ca_county", "customer_address");
+        //allDistinctPara = allDistinctPara.subList(0,150);
         int tableSize = dbConnector1.getTableSize("customer_address");
         Random r = new Random();
         FileWriter fw = new FileWriter(new File(inputPath));
         BufferedWriter bw = new BufferedWriter(fw);
         //生成in语句
-        for (int i = 0; i < 0; i++) {
+        for (int i = 0; i < 50; i++) {
             Collections.shuffle(allDistinctPara);
             int length = r.nextInt(5) + 1;
             List<String> eachInList = allDistinctPara.subList(0, length);
@@ -265,7 +289,7 @@ public class GenerateInput {
         HashSet<String> allDistinctTail = new HashSet<>();
         for (String s : allDistinctPara) {
             int len = s.split(" ").length;
-            if(len == 3) {
+            if (len == 3) {
                 String[] headSplit = s.split(" ");
                 //取随机长度的头
                 int headLength = r.nextInt(2) + 1;
@@ -286,14 +310,14 @@ public class GenerateInput {
                 allDistinctMid.add(headSplit[1]);
                 allDistinctTail.add(tail);
             }
-            if(len == 2){
+            if (len == 2) {
                 String head = s.split(" ")[0];
                 String tail = s.split(" ")[1];
                 allDistinctHead.add(head);
                 //allDistinctMid.add(headSplit[1]);
                 allDistinctTail.add(tail);
             }
-            if(len == 1){
+            if (len == 1) {
                 allDistinctHead.add(s);
                 //allDistinctMid.add(headSplit[1]);
                 allDistinctTail.add(s);
@@ -302,11 +326,11 @@ public class GenerateInput {
         HashSet<Integer> chosenStart = new HashSet<>();
         HashSet<Integer> chosenMid = new HashSet<>();
         HashSet<Integer> chosenTail = new HashSet<>();
-        for (int i = 0; i < 40; i++) {
+        for (int i = 0; i < 20; i++) {
             //随机选择一个开头
-            int likeStart = r.nextInt(300);
+            int likeStart = r.nextInt(150);
             while (chosenStart.contains(likeStart)) {
-                likeStart = r.nextInt(300);
+                likeStart = r.nextInt(150);
             }
             chosenStart.add(likeStart);
 
@@ -319,7 +343,7 @@ public class GenerateInput {
             likeSqlPara = likeSqlPara + "'" + likePara + "%' = " + outputCount;
             bw.write(likeSqlPara + System.lineSeparator());
         }
-        for (int i = 0; i < 20; i++) {
+        for (int i = 0; i < 10; i++) {
             //随机选择一个中间
             int likeMid = r.nextInt(22);
             while (chosenMid.contains(likeMid)) {
@@ -337,7 +361,7 @@ public class GenerateInput {
             likeSqlPara = likeSqlPara + "'" + "%" + likePara + "%' = " + outputCount;
             bw.write(likeSqlPara + System.lineSeparator());
         }
-        for (int i = 0; i < 40; i++) {
+        for (int i = 0; i < 20; i++) {
             //随机选择一个结尾
             int likeTail = r.nextInt(72);
             while (chosenTail.contains(likeTail)) {
@@ -357,5 +381,35 @@ public class GenerateInput {
         }
         bw.close();
         fw.close();
+    }
+
+    public static void constructSF() throws IOException, MainException, SQLException {
+        List<String> allCC = readOutPutFile();
+        FileWriter fw1 = new FileWriter(new File("D:\\eclipse-workspace\\multiStirngMatching\\conf\\inputTest100.txt"));
+        BufferedWriter bw1 = new BufferedWriter(fw1);
+        DatabaseConnectorConfig config1 = new DatabaseConnectorConfig("wqs97.click", "5432", "postgres", "Biui1227..", "tpcds");
+        DbConnector dbConnector1 = new PgConnector(config1);
+        for (String s : allCC) {
+            StringBuilder sql = new StringBuilder("select count(*) from customer_address where ");
+            sql.append(s.split("=")[0]);
+            int count = dbConnector1.getSqlResult(sql.toString());
+            bw1.write(s.split("=")[0] + "= " + count*100 + System.lineSeparator());
+        }
+        bw1.close();
+        fw1.close();
+        allCC.size();
+    }
+
+    public static List<String> readOutPutFile() throws IOException {
+        List<String> output = new ArrayList<>();
+        FileInputStream inputStream = new FileInputStream("D:\\eclipse-workspace\\multiStirngMatching\\conf\\inputTest.txt");
+        BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream));
+        String str = null;
+        while ((str = bufferedReader.readLine()) != null) {
+            output.add(str);
+        }
+        inputStream.close();
+        bufferedReader.close();
+        return output;
     }
 }

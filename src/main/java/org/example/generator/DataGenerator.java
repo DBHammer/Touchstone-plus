@@ -33,12 +33,12 @@ public class DataGenerator implements Callable<Integer> {
 
     public Integer call() throws IOException, MainException {
         init();
-        changeParaNumAndRows();
-        //为n个参数的每一个生成一个随机的不重复的值
         int inSum = 0;
         for (InType inType : InTypes) {
             inSum += inType.getParaNum();
         }
+        changeParaNumAndRows();
+        //为n个参数的每一个生成一个随机的不重复的值
 
         LikePatterGenerator likePatterGenerator = new LikePatterGenerator(topoGraph, LikeTypes);
         //todo 需要考虑in和like的参数有重复的情况
@@ -174,11 +174,11 @@ public class DataGenerator implements Callable<Integer> {
                 if (canBeTopo(sortedNode[i] - inTypeSize, sortedNode[j] - inTypeSize)) {
                     long[] vecter2 = paraPresent.get(sortedNode[j]);
                     if (isContainVecter(vecter1, vecter2)) {
-                        topoGraph.addEdge(sortedNode[i], sortedNode[j]);
+                        topoGraph.addEdge(sortedNode[i] - inTypeSize, sortedNode[j] - inTypeSize);
                         break;
                     }
                     if (isContainVecter(vecter2, vecter1)) {
-                        topoGraph.addEdge(sortedNode[j], sortedNode[i]);
+                        topoGraph.addEdge(sortedNode[j] - inTypeSize, sortedNode[i] - inTypeSize);
                         break;
                     }
                 }
@@ -433,12 +433,14 @@ public class DataGenerator implements Callable<Integer> {
         List<long[]> allCom = new ArrayList<>();
         printCombinations(tmp, -1, otherRows, new long[]{}, allCom);
         List<Integer> hasFill = new ArrayList<>();
-        for (int i = 0; i < allCom.get(0).length; i++) {
-            for (Integer integer : allPostition) {
-                if ((paraRows[integer] == allCom.get(0)[i]) && (!hasFill.contains(integer))) {
-                    allPositionCanBeFill.add(integer);
-                    hasFill.add(integer);
-                    break;
+        if(!allCom.isEmpty()) {
+            for (int i = 0; i < allCom.get(0).length; i++) {
+                for (Integer integer : allPostition) {
+                    if ((paraRows[integer] == allCom.get(0)[i]) && (!hasFill.contains(integer))) {
+                        allPositionCanBeFill.add(integer);
+                        hasFill.add(integer);
+                        break;
+                    }
                 }
             }
         }

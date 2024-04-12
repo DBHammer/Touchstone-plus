@@ -2,7 +2,6 @@ package org.example.solver;
 
 import org.chocosolver.solver.Model;
 import org.chocosolver.solver.ParallelPortfolio;
-import org.chocosolver.solver.constraints.ternary.PropTimesNaive;
 import org.chocosolver.solver.variables.IntVar;
 import org.chocosolver.solver.variables.Variable;
 import org.example.dbconnector.DbConnector;
@@ -37,6 +36,7 @@ public class EquationSolver implements Callable<Integer> {
     private static String colName;
     private static String tableName;
     private static final long MaxRow = 9999999;
+    private static int tableSize;
 
     public Integer call() throws IOException, MainException, SQLException {
         TaskConfigurator config;
@@ -45,19 +45,33 @@ public class EquationSolver implements Callable<Integer> {
         List<String> eachLine = getEachLine(config.getInputDirectory());
         colName = getColName(eachLine);
         tableName = getTableName(eachLine);
+        tableSize = dbConnector.getTableSize(tableName);
         List<InType> InTypes = new ArrayList<>();
         List<LikeType> LikeTypes = new ArrayList<>();
         getInTypeAndLikeType(InTypes, LikeTypes, eachLine);
         HashSet<String> allDistinctParas = getDistinctParasInIntypes(eachLine);
-        List<String> allInParasValueUpperBound = getInParaValueUpperBound(eachLine, InTypes, allDistinctParas, getTableSize(dbConnector));
+        BigDecimal denominator = getDenominator(InTypes, LikeTypes, error);
+        List<String> allInParasValueUpperBound = getInParaValueUpperBound(eachLine, InTypes, allDistinctParas, getTableSize(dbConnector));//todo
         List<String> allLikeParasValueUpperBound = getLikeParaValueUpperBound(LikeTypes);
         List<String> allParasValueUpperBound = new ArrayList<>(allInParasValueUpperBound);
+        System.out.println(tableSize);
         allParasValueUpperBound.addAll(allLikeParasValueUpperBound);
-        BigDecimal denominator = cutDomainInOneError(allParasValueUpperBound, error);
+        cutDomain(allParasValueUpperBound, denominator);
         int allDistinctParaInCol = dbConnector.getAllDistinctString(colName, tableName).size();
         TopoGraph topoGraphs = getTopoGraphs(eachLine, LikeTypes);
         solve(InTypes, LikeTypes, config.getOutputDirectory(), dbConnector, topoGraphs, allInParasValueUpperBound, allParasValueUpperBound, allDistinctParaInCol, denominator);
         return 0;
+    }
+
+    public void cutDomain(List<String> allParasValueUpperBound, BigDecimal denominator) {
+        List<String> newParaBound = new ArrayList<>();
+        for (int i = 0; i < allParasValueUpperBound.size(); i++) {
+            long currentRow = Long.parseLong(allParasValueUpperBound.get(i));
+            long newRow = BigDecimal.valueOf(currentRow).divide(denominator, 6, RoundingMode.UP).longValue();//(currentRow / denominator);
+            newParaBound.add(String.valueOf(newRow));
+        }
+        allParasValueUpperBound.clear();
+        allParasValueUpperBound.addAll(newParaBound);
     }
 
     public void solve(List<InType> InTypes, List<LikeType> LikeTypes, String outputPath, DbConnector dbConnector,
@@ -111,8 +125,8 @@ public class EquationSolver implements Callable<Integer> {
 
 
             //得到null的行数
-            long nullRows = getNullRows(dbConnector);
-            long tableSzie = getTableSize(dbConnector);
+            long nullRows = getNullRows(dbConnector);//todo
+            long tableSzie = getTableSize(dbConnector);//todo
             ParallelPortfolio portfolio = new ParallelPortfolio();
             for (int s = 0; s < nbModels; s++) {
                 portfolio.addModel(makeModel(InTypes, LikeTypes, n, originN, nullRows, tableSzie,
@@ -126,7 +140,7 @@ public class EquationSolver implements Callable<Integer> {
                 FileWriter fw = new FileWriter(new File(outputPath));
                 BufferedWriter bw = new BufferedWriter(fw);
                 bw.write(tableName + "." + colName + System.lineSeparator());
-                bw.write("tableSize: " + dbConnector.getTableSize(tableName) + System.lineSeparator());
+                bw.write("tableSize: " + dbConnector.getTableSize(tableName) + System.lineSeparator());//todo
                 bw.write("nullRows: " + nullRows + System.lineSeparator());
                 bw.write("denominator: " + denominator + System.lineSeparator());
                 //bw.write("groupSize: " + groupSize + System.lineSeparator());
@@ -193,10 +207,7 @@ public class EquationSolver implements Callable<Integer> {
         IntVar[] allParaRows = new IntVar[n];
         for (int i = 0; i < n; i++) {
             int upperbound = Integer.parseInt(allParasValueUpperBound.get(i));
-//            if (upperbound < 70) {
-//                upperbound = 70;
-//            }
-            IntVar eachPara = model.intVar("para" + i, 0, upperbound+10);
+            IntVar eachPara = model.intVar("para" + i, 0, upperbound + 10);
             allParaRows[i] = eachPara;
         }
         List<IntVar[]> isPercentVector = new ArrayList<>();
@@ -221,7 +232,7 @@ public class EquationSolver implements Callable<Integer> {
             IntVar[] vectorMul = new IntVar[n];
             for (int j = 0; j < n; j++) {
                 int upperbound = Integer.parseInt(allParasValueUpperBound.get(j));
-                IntVar eachMulPara = model.intVar("mulPara" + j, 0, upperbound+10);
+                IntVar eachMulPara = model.intVar("mulPara" + j, 0, upperbound + 10);
                 vectorMul[j] = eachMulPara;
             }
             vectorMuls.add(vectorMul);
@@ -250,8 +261,13 @@ public class EquationSolver implements Callable<Integer> {
                 up = paraNum + 1;
                 down = paraNum - 1;
             }
-            model.sum(isPercentVector.get(i), "<=", up).post();
-            model.sum(isPercentVector.get(i), ">=", down).post();
+            IntVar[] vecs = isPercentVector.get(i);
+            IntVar tmp = vecs[0];
+            for (int j = 1; j < vecs.length; j++) {
+                tmp = tmp.add(vecs[j]).intVar();
+            }
+            model.arithm(tmp, "<=", up).post();
+            model.arithm(tmp, ">=", down).post();
         }
         for (int i = 0; i < InTypes.size() + LikeTypes.size(); i++) {
             String strRows;
@@ -261,14 +277,23 @@ public class EquationSolver implements Callable<Integer> {
                 strRows = LikeTypes.get(i - InTypes.size()).getRows();
             }
             int intRows = Integer.parseInt(strRows);
-            //intRows = BigDecimal.valueOf(intRows).divide(denominator, 6, RoundingMode.UP).intValue();
             int[] denominators = new int[vectorMuls.get(0).length];
             Arrays.fill(denominators, denominator.intValue());
-            //model.sum(vectorMuls.get(i), "=", intRows).post();
-//            model.scalar(vectorMuls.get(i), denominators, "<=", (int) (Math.round(1.05 * intRows))).post();
-//            model.scalar(vectorMuls.get(i), denominators, ">=", (int) (Math.round(0.95 * intRows))).post();
-            model.sum(vectorMuls.get(i), "<=", (int) (Math.round(1.05 * intRows))).post();
-            model.sum(vectorMuls.get(i), ">=", (int) (Math.round(0.95 * intRows))).post();
+            IntVar[] vecs = vectorMuls.get(i);
+            IntVar tmp = model.intScaleView(vecs[0], denominators[0]);
+            for (int j = 1; j < vecs.length; j++) {
+                tmp = tmp.add(model.intScaleView(vecs[j], denominators[j])).intVar();
+            }
+//            model.arithm(tmp, "=", intRows).post();
+
+//            model.sum(vectorMuls.get(i), "=", intRows).post();
+
+            int up = (int) Math.floor(1.05 * intRows);
+            int down = (int) Math.ceil(0.95 * intRows);
+            model.arithm(tmp, "<=", (int) (Math.floor(1.05 * intRows))).post();
+            model.arithm(tmp, ">=", (int) (Math.ceil(0.95 * intRows))).post();
+            model.sum(vectorMuls.get(i), "<=", (int) (Math.floor(1.05 * intRows))).post();
+            model.sum(vectorMuls.get(i), ">=", (int) (Math.ceil(0.95 * intRows))).post();
         }
         //建模like中的包含和互斥关系
         //思路是使用层序遍历的方法，对每一层的同父节点添加互斥约束，父节点与子节点添加包含约束
@@ -478,7 +503,8 @@ public class EquationSolver implements Callable<Integer> {
             index = currentIndex;
             currentIndex = line.indexOf("=", currentIndex + 1);
         }
-        return line.substring(index + 1).trim();
+        String output = line.substring(index + 1).trim();
+        return output;
     }
 
     public int getMax(int[] arr) {
@@ -720,31 +746,41 @@ public class EquationSolver implements Callable<Integer> {
 
     public List<String> getInParaValueUpperBound(List<String> eachLine, List<InType> inTypes, HashSet<String> allDistinctParas, long tableSize) {
         List<String> paraValueUpperBound = new ArrayList<>();
-        List<List<String>> allParas = new ArrayList<>();
-        for (String s : eachLine) {
-            if (s.contains(" in ") || s.contains(" IN ")) {
-                List<String> paras = getAllParas(s);
-                allParas.add(paras);
+//        List<List<String>> allParas = new ArrayList<>();
+//        for (String s : eachLine) {
+//            if (s.contains(" in ") || s.contains(" IN ")) {
+//                List<String> paras = getAllParas(s);
+//                allParas.add(paras);
+//            }
+//        }
+//        HashMap<String, Long> distinctPara2UpperBound = new HashMap<>();
+//        for (String allDistinctPara : allDistinctParas) {
+//            distinctPara2UpperBound.put(allDistinctPara, tableSize);
+//        }
+//        for (int i = 0; i < inTypes.size(); i++) {
+//            long rows = Long.parseLong(inTypes.get(i).getRows());
+//            List<String> eachLineParas = allParas.get(i);
+//            for (String eachLinePara : eachLineParas) {
+//                long originRows = distinctPara2UpperBound.get(eachLinePara);
+//                if (rows < originRows) {
+//                    distinctPara2UpperBound.put(eachLinePara, rows);
+//                }
+//            }
+//        }
+//        List<Long> distinctPara2UpperBoundValues = new ArrayList<>(distinctPara2UpperBound.values().stream().toList());
+//        Collections.sort(distinctPara2UpperBoundValues);
+//        for (Long value : distinctPara2UpperBoundValues) {
+//            paraValueUpperBound.add(value.toString());
+//        }
+        int max = 0;
+        for (InType inType : inTypes) {
+            int rows = Integer.parseInt(inType.getRows());
+            if (rows > max) {
+                max = rows;
             }
         }
-        HashMap<String, Long> distinctPara2UpperBound = new HashMap<>();
-        for (String allDistinctPara : allDistinctParas) {
-            distinctPara2UpperBound.put(allDistinctPara, tableSize);
-        }
-        for (int i = 0; i < inTypes.size(); i++) {
-            long rows = Long.parseLong(inTypes.get(i).getRows());
-            List<String> eachLineParas = allParas.get(i);
-            for (String eachLinePara : eachLineParas) {
-                long originRows = distinctPara2UpperBound.get(eachLinePara);
-                if (rows < originRows) {
-                    distinctPara2UpperBound.put(eachLinePara, rows);
-                }
-            }
-        }
-        List<Long> distinctPara2UpperBoundValues = new ArrayList<>(distinctPara2UpperBound.values().stream().toList());
-        Collections.sort(distinctPara2UpperBoundValues);
-        for (Long value : distinctPara2UpperBoundValues) {
-            paraValueUpperBound.add(value.toString());
+        for (int i = 0; i < allDistinctParas.size(); i++) {
+            paraValueUpperBound.add(String.valueOf(tableSize));
         }
         return paraValueUpperBound;
     }
@@ -752,7 +788,8 @@ public class EquationSolver implements Callable<Integer> {
     public List<String> getLikeParaValueUpperBound(List<LikeType> LikeTypes) {
         List<String> paraValueUpperBound = new ArrayList<>();
         for (LikeType likeType : LikeTypes) {
-            paraValueUpperBound.add(likeType.getRows());
+            String eachLikeRows = likeType.getRows();
+            paraValueUpperBound.add(/*eachLikeRows*/String.valueOf(tableSize));
         }
         return paraValueUpperBound;
     }
@@ -768,25 +805,27 @@ public class EquationSolver implements Callable<Integer> {
         return alldistinct;
     }
 
-    public BigDecimal cutDomainInOneError(List<String> allParasValueUpperBound, double error) {
+    public BigDecimal getDenominator(List<InType> InTypes, List<LikeType> LikeTypes, double error) {
         long min = MaxRow;
         if (error != 0) {
-            for (String s : allParasValueUpperBound) {
-                long currentRow = Long.parseLong(s);
-                if (currentRow < min) {
-                    min = currentRow;
+//            for (String s : allParasValueUpperBound) {
+//                long currentRow = Long.parseLong(s);
+//                if (currentRow < min) {
+//                    min = currentRow;
+//                }
+//            }
+            for (int i = 0; i < InTypes.size() + LikeTypes.size(); i++) {
+                int cardinality;
+                if (i < InTypes.size()) {
+                    cardinality = Integer.parseInt(InTypes.get(i).getRows());
+                } else {
+                    cardinality = Integer.parseInt(LikeTypes.get(i - InTypes.size()).getRows());
+                }
+                if (cardinality < min) {
+                    min = cardinality;
                 }
             }
-            BigDecimal denominator = BigDecimal.valueOf(min * error);
-            List<String> newParaBound = new ArrayList<>();
-            for (int i = 0; i < allParasValueUpperBound.size(); i++) {
-                long currentRow = Long.parseLong(allParasValueUpperBound.get(i));
-                long newRow = BigDecimal.valueOf(currentRow).divide(denominator, 6, RoundingMode.UP).longValue();//(currentRow / denominator);
-                newParaBound.add(String.valueOf(newRow));
-            }
-            allParasValueUpperBound.clear();
-            allParasValueUpperBound.addAll(newParaBound);
-            return denominator;
+            return BigDecimal.valueOf(min * error);
         } else {
             return new BigDecimal("1.0");
         }

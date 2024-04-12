@@ -17,8 +17,8 @@ import java.util.stream.Collectors;
 
 public class testResult {
 
-    public static String inputPath = "D:\\eclipse-workspace\\multiStirngMatching\\conf\\newSql.txt";
-    public static String originPath = "D:\\eclipse-workspace\\multiStirngMatching\\conf\\inputTest.txt";
+    public static String inputPath = "D:\\eclipse-workspace\\Touchstone\\data\\newSql.txt";
+    public static String originPath = "D:\\eclipse-workspace\\Touchstone\\conf\\inputTest.txt";
     public static String originLikePath = "D:\\eclipse-workspace\\multiStirngMatching\\conf\\inputLikeTest.txt";
     public static String sqlHead = "select count(*) from part where ";
     public static String sqlHeadLike = "select count(*) from part where ";
@@ -52,6 +52,7 @@ public class testResult {
     }
 
     public static void testAll() throws MainException, SQLException, IOException, ExecutionException, InterruptedException {
+        //System.out.println((int) (Math.round(0.95 * 73)));
         DatabaseConnectorConfig config1 = new DatabaseConnectorConfig("wqs97.click", "5432", "postgres", "Biui1227..", "tpcdsonecolumn");
         DbConnector dbConnector1 = new PgConnector(config1);
         DatabaseConnectorConfig config2 = new DatabaseConnectorConfig("wqs97.click", "5432", "postgres", "Biui1227..", "tpcds");
@@ -94,7 +95,7 @@ public class testResult {
             }
 
         })).get();
-        System.out.println((double) sum.get() / 100000/100);
+        System.out.println((double) sum.get() / 100000/20);
     }
 
     public static List<String> getEachLine(String intputPath) {

@@ -1,100 +1,100 @@
-customer_address.ca_county like 'AMB5CsDPE0FdGUHwI9JNKpL8M9NAObPhQARlSQTcUN%'
-customer_address.ca_county like 'Aj%'
-customer_address.ca_county like 'AH%'
-customer_address.ca_county like 'Au%'
-customer_address.ca_county like 'Ai%'
-customer_address.ca_county like 'A4%'
-customer_address.ca_county like 'AN%'
-customer_address.ca_county like 'Aw%'
-customer_address.ca_county like 'A9%'
-customer_address.ca_county like 'AX%'
-customer_address.ca_county like 'Ab%'
-customer_address.ca_county like 'Ar%'
-customer_address.ca_county like 'As%'
-customer_address.ca_county like 'Ad%'
-customer_address.ca_county like 'An%'
-customer_address.ca_county like 'AZ%'
-customer_address.ca_county like 'AR%'
-customer_address.ca_county like 'AQ%'
-customer_address.ca_county like 'AG%'
-customer_address.ca_county like 'AF%'
-customer_address.ca_county like 'A2%'
-customer_address.ca_county like 'A1%'
-customer_address.ca_county like 'Ax%'
-customer_address.ca_county like 'Av%'
-customer_address.ca_county like 'A0%'
-customer_address.ca_county like 'Aq%'
-customer_address.ca_county like 'AS%'
-customer_address.ca_county like 'AC%'
-customer_address.ca_county like 'Ae%'
-customer_address.ca_county like 'AW%'
-customer_address.ca_county like 'Az%'
-customer_address.ca_county like 'AO%'
-customer_address.ca_county like 'AT%'
-customer_address.ca_county like 'AP%'
-customer_address.ca_county like 'Ao%'
-customer_address.ca_county like 'Ag%'
-customer_address.ca_county like 'AA%'
-customer_address.ca_county like 'Ac%'
-customer_address.ca_county like 'Ap%'
-customer_address.ca_county like 'AL%'
-customer_address.ca_county like '%AMB5CsDPE0FdGUHwI9JNKpL8%'
-customer_address.ca_county like '%AMB5CsDPE0FdGUHwI9JNKpL8M9NAObPh%'
-customer_address.ca_county like '%AMB5CsDPE0%'
-customer_address.ca_county like '%AM%'
-customer_address.ca_county like '%AMB5%'
-customer_address.ca_county like '%AMB5CsDPE0FdGUHw%'
-customer_address.ca_county like '%AMB5CsDPE0FdGUHwI9JNKpL8M9NA%'
-customer_address.ca_county like '%AMB5CsDPE0FdGUHwI9JNKpL8M9NAOb%'
-customer_address.ca_county like '%AMB5CsDPE0FdGUHwI9JNKpL8M9NAObPhQARl%'
-customer_address.ca_county like '%AMB5Cs%'
-customer_address.ca_county like '%AMB5CsDPE0FdGUHwI9JNKpL8M9NAObPhQA%'
-customer_address.ca_county like '%AMB5CsDPE0FdGUHwI9JNKpL8M9NAObPhQARlSQ%'
-customer_address.ca_county like '%AMB5CsDPE0FdGUHwI9JN%'
-customer_address.ca_county like '%AMB5CsDPE0FdGU%'
-customer_address.ca_county like '%AMB5CsDPE0FdGUHwI9JNKpL8M9%'
-customer_address.ca_county like '%AMB5CsDPE0Fd%'
-customer_address.ca_county like '%AMB5CsDPE0FdGUHwI9JNKp%'
-customer_address.ca_county like '%AMB5CsDP%'
-customer_address.ca_county like '%AMB5CsDPE0FdGUHwI9JNKpL8M9NAObPhQARlSQTc%'
-customer_address.ca_county like '%AMB5CsDPE0FdGUHwI9%'
-customer_address.ca_county like '%NA'
-customer_address.ca_county like '%qA'
-customer_address.ca_county like '%YA'
-customer_address.ca_county like '%lA'
-customer_address.ca_county like '%1A'
-customer_address.ca_county like '%xA'
-customer_address.ca_county like '%cA'
-customer_address.ca_county like '%QA'
-customer_address.ca_county like '%tA'
-customer_address.ca_county like '%BA'
-customer_address.ca_county like '%2A'
-customer_address.ca_county like '%4A'
-customer_address.ca_county like '%FA'
-customer_address.ca_county like '%9A'
-customer_address.ca_county like '%hA'
-customer_address.ca_county like '%3A'
-customer_address.ca_county like '%nA'
-customer_address.ca_county like '%IA'
-customer_address.ca_county like '%yA'
-customer_address.ca_county like '%DA'
-customer_address.ca_county like '%UA'
-customer_address.ca_county like '%CA'
-customer_address.ca_county like '%6A'
-customer_address.ca_county like '%OA'
-customer_address.ca_county like '%5A'
-customer_address.ca_county like '%eA'
-customer_address.ca_county like '%kA'
-customer_address.ca_county like '%wA'
-customer_address.ca_county like '%0A'
-customer_address.ca_county like '%AA'
-customer_address.ca_county like '%aA'
-customer_address.ca_county like '%gA'
-customer_address.ca_county like '%sA'
-customer_address.ca_county like '%zA'
-customer_address.ca_county like '%dA'
-customer_address.ca_county like '%bA'
-customer_address.ca_county like '%HA'
-customer_address.ca_county like '%VA'
-customer_address.ca_county like '%mA'
-customer_address.ca_county like '%uA'
+part.p_type in ('SxUOmIS6vFJYyNsN1Yv6m', 'Tb1Nc6pSj7Zmpgc8uo7OfM', 'dx1SnVuFd308e154sXzfR', 'MWDnF9b5NYHH7ig5qVB', 'Xga1y4h2ed2rgtK3gTyDN3cP')
+part.p_type in ('Yyft44UDXT5AfptcCDw', 'KGwLDBbDJV7ZcyZiOe', 'FNBFN6MyrTDzbyIqvU4q2g')
+part.p_type in ('SdKtsT90I8QJbo4Mq', 'qxT008aIQr1Cg0s2Lcg')
+part.p_type in ('liWhACyBPpdcVkuuNixI4')
+part.p_type in ('axRsnVBBddV9gnjb3')
+part.p_type in ('qfxl4U3NJ5myZzifPOPliBYv')
+part.p_type in ('AoOLcDc4Cjixm95wOpQpR2qo', 'jbAftBue3quiWOYJmxNJ', '2LGCg5pmug5oq7sfJ9skwjRaa', '7dp75oCxGq8R9NCg1kWe2V')
+part.p_type in ('V0ix8ZEI6izKjzYFj8eV7hT', 'bRVIOQmZGgdVk22UT', 'NNIwRlADq02wemV1JA')
+part.p_type in ('7Zim9At4DQVmQhIlHJVgOtX', 'pYgyq5TduJvZHpBnrnTalKKg4')
+part.p_type in ('LbEvZgQDvDaOOzwCmdmCR')
+part.p_type in ('lL9nECKjbEZTlMBToLjk', 'w4EeIeAzkCJtlVDukNX', 'igvCJRlWwSyroRLBnfH', 'cQ2g0j5Kd7E55q3kxSCpiC', 'O3v2A9dB6hQQiSvWqkkBp4lZ')
+part.p_type in ('jnq9XyT3aXBGxiTlkH')
+part.p_type in ('T8NDmVEIHDLgmendzoBF', 'v5QFC8uFZzyZKEWgU8SKGuHdd', 'qRZ7yFZDpjD7gy0f2J', 'MbPiQoSaswEJdCXA176iwyP', 'nvhDmd6eos3jj8ZscN2')
+part.p_type in ('0g24oSVxUs6UVE4rBtVsCZVS', 'Z6r4e4a9Ym9AqnAr')
+part.p_type in ('jFcYS0ZiQYRyJWCWN31jht', 'Vh38R8xaawHhLYnWbU')
+part.p_type in ('81D3VJiSWGiEugY2sK6pL', '71Gy6aYFJBjEiXS2i', 'V3osGVeN0B35jCBksg4LeLKoA', 'HeHrwBT77o0m8HbaMkYtABv', 'pGjo10tCna6mFpzW')
+part.p_type in ('CNmAHA37q9jVNMiDWrOxOt', 'Rr2INlLW5zbcSJGPRR6n8H3', 'p5vQi3pX4ScgCQbYKpkZwN8S', 'll5auIWJ1m1s9pZ3BQltvoy1A', 'faYDuSYaawOGajb1')
+part.p_type in ('8ExqSBOmygzEBaPI', '1E4IUuWvWaYNpbf5SMwCVfHM', 'yvVrL2LHAFaMSMweKM', 'Secs0SYBnyKms4f1JGpKM4E')
+part.p_type in ('pSdzObHOpHcEbqThOpevqtSxW')
+part.p_type in ('AQCAHMvOJ4yl2KpWwok', 'b3mv8VtAULk6h0K8Iq', 'BGuhs0NRgL8AwWfkwZl5n4Gk', 'xlZfNvslAPmPX5tO', 'QG8ssIMWOlUaxpbmlMfj0zYd')
+part.p_type in ('3Rq8l258vc71JzbhdFW8', 'j4yNnvGC8ADEGBOkuFm2BX', 'WLemNLGTB69l2CScCRd')
+part.p_type in ('UzpQLBOsRF2PLv3j', 'uxTngdx14ZA930r6bqNfhZi', 'WaGTAZS7N482GWIscc')
+part.p_type in ('jQzfq24yiQsyqkXNEfrNBnA1L')
+part.p_type in ('Tk4SoatcD2MH9lfk3ctH', '5XFAjpyRqAv3jfubYyl', 'yQLJDe7Q7bs2acSp1QihTw')
+part.p_type in ('ikcy7SNj43Ri5F4riO1gu', 'rnxxj6BstAQn9a6ODc')
+part.p_type in ('Q1ph8mgrN7bTv4OLFx')
+part.p_type in ('mbhzXSXINNzWFDYk', '4QQIW3o6BwoAwsEAjwJkAoUV', '9GsQNv4msLvFhopjd9o', 'FasHXnnKL9Cr70jblhEeQea', 'hiwYEJc640riEvLvxme')
+part.p_type in ('T2LbfrORkAbnq3ifxW', 'WdZA4mPJKv6VGYrXar9XLSGoI', 'Gi1PjZYYA01V68ZT1', '4A0YYdEJjJb4LXV94Sdw')
+part.p_type in ('yxc8G4XFek4KHN4YoOo', 'UODq1cgUDBdV6ho0VJ7', '6HiCiVbHuU2VIZmc')
+part.p_type in ('fkBGDjmq55KD0DgPtzFlCQ', 'MZdlwgbeqymjfDAcQAxn', 'hqeaqKfm9VKx3ukfPpVZjhd', '09XVRalAynVN3JMeDwFfRnV', 'loZrNXiuCntsBwfyzbAEpu')
+part.p_type in ('mfnX45e1zk2zf2dTX7Fn4xzM', 'qYa5d3y4lDWDoV8OqXvawBOl', 'pxp0FiiO5lGOIHSFA1gYUW', 'OEwwbSaAgmEXZYfdgqhyg78')
+part.p_type in ('yuQ9A2qcZ8T6AN12ei', 'QQn6JT6TJ3abj2Dn5wo16NtU1', '2ocunu4r9qY20M9TqbX3DHO')
+part.p_type in ('v0PwNwS8fQpEbdlNH3D', 'No9xMshWXjp1D3xc5K', 't0gKMWXfljsFWsgIU2B9D', '2RCnZrJOmMXhOcDt5')
+part.p_type in ('sC8ITELuAentlztul9jfFk2ja')
+part.p_type in ('4zWgD2WUbXPGr4bNB')
+part.p_type in ('EeCmSVsybjYvUf5ctkcA1jTW', 'b3x9Ecos8ivlRH76', 'i0b8mVDdTMCY5v8enuzO', 'ZMP2wMZAOgRpBctHn')
+part.p_type in ('xlt1RPTyxijACRWE', 'YZ2jCl7OEmLKNYQEIdl04', 'I7Rb2ww661k2GsXvmrGQLUR', '7JW02o4n9xmbjE8sRGZUCa7Vp')
+part.p_type in ('vn3UYMQG0gOQFdqehbncFwbu', 'SLm5tHdzlcd8GCJY', 'm6FM0yNzhII3pMsc2kmxZytT')
+part.p_type in ('dg2kQD06LIKE21WR', 'yHpfnDIHp5uQHPraIIL3Pg', 'u6PgN4qYxD5H2RKnn', 'qvBeNLGrq3ymRqR9uXoR', 'Vr6wgqRJMTvS5JKNl')
+part.p_type in ('ODAxlrEzeWF2uHZ65yY', 'K5kQU8UwIlA5fz3dEuWtWI')
+part.p_type in ('EuQgKMOst6Z1ubGQGfu', 'N1GeguOhy0sBxzLXzX', 'gJqx1Gj5o34VJjUV', 'XfX9q5ix8BNG3HXPdSZNN')
+part.p_type in ('Q1ph8mgrN7bTv4OLFx')
+part.p_type in ('iXczRASPZb2PulTJAR6viUFR')
+part.p_type in ('olDrABUykosJpaWERVEctHs')
+part.p_type in ('NuGkZk262hbvRxUwGwa6', 'GnNTINXy9FgqXelXxKBcHnx', 'SnjyO7r6Dt7YlmnOXvWwXL2NO')
+part.p_type in ('2zFfoRfGeKTWN48Vp0O', 'RIhhwheNyB1rfokwgYBThu', 'zikVzN3RigdwISR0qzXOptAhV')
+part.p_type in ('jnq9XyT3aXBGxiTlkH')
+part.p_type in ('wpzFpGI5tFC1El4lLQ8G')
+part.p_type in ('qRQZQ9rcRTYNEX6aButsS0B')
+part.p_type in ('KvFPOz89JzV0jFxV', 'IXcwiXVPFe0r5H6G9WJcn', 'ZENDhumwaV0Fqlc9', 'B8nSGyuMTr3hkfxPiJ')
+part.p_type in ('HdZOrA8gO0zT8ZPY')
+part.p_type in ('x9GRff6KmXH6fXwO')
+part.p_type in ('OmZEelJSQNd8l5pnB', 'Bg1M5XqYiWemTIjnjl1Vcx', 'PC2RJVamH3BqQuZ9xzoDKISU6')
+part.p_type in ('R4uAoxAWvOXQW9vTwsQe', 'DwVxG6zsq31hSzqEt1KF82', 'I8xyaDrRq9WkMDfomZteL3Hlu', 'Io0swCaRRkxzTdvK2R')
+part.p_type in ('lhxgMs33XejriD3L3')
+part.p_type in ('zDG2KhW8SuC9eTBPCER3', 'yZedZpxfn4neXAdqnauZHu', 'QLbCUCE4OZrDP5aMQKiDvg', 'JbMkKFqdkJuzK5LTqIXrpFa1', 'lJqlQsKt1NGdHFoY9Mv')
+part.p_type in ('A366DcrhNJ59h3zDO8j07', 'UfvkMWAEgEFApyGF', 'rAvnIvyOiTlJLZuHIJT', 'kTnOGS44Cvh6ZZo7KjVPNx', 'JXgNo8B9PHkhSVgw2cncDGPcm')
+part.p_type in ('w7DlSak2pEAUPtG9V', 'jFM5oI40trRA5Qa3pwP1amhMC', 'XW3c5LTdZkfZDdWVlwoOAROM', 'o2Q6u2BRCOCmgHSU2I')
+part.p_type in ('jSDOGflis1xhLo3FT', 'mmHGPKaAuJ6MGdlZ2J0cXxzu', 'r5Lux1vT1syPDjcJaJmaBiB', 'etFMEfnSt7lMwzNRAHc')
+part.p_type in ('fXutVwR8OVlFktv1bq0CqmQ')
+part.p_type in ('AhbgKTWgbLOafhlIDyuEo')
+part.p_type in ('zEV8UEHwmPjQeDf93fN5gzt', '4Iade5CjcwlI93NIQ', 'gkNB9X7JoPJ7JJeeyKgzARM')
+part.p_type in ('7VdoWRnsSC556I71F', 'dv5JxwZ8cFTWCxdj')
+part.p_type in ('CfHFTBqYxzsD6FuqoicH48', 'qtgyjcibjcrGg2DfOHFCQUjL3', '8AOfX5NzE0I5AmHh5RzHk', 'ws7TPzxDOP3TRecPs1dSbIq0k', 'oEug8fYIs2OaxA0dD1yRf1Gh')
+part.p_type in ('fEkVu2uOQLgrpVZBkTFykP', 'sNTbGF6isOEWt76KBEGLT8Sc6', 'AUyNw6gQWO4JU9IlT1Ogdw0z', 'NXfV7guBWmylS3WK7ypeytVdS')
+part.p_type in ('TykUwTp0GBYH2oocHhlm', 'sX7ZWnZbaNWWVDC1KQgoF', 'YJSXojNEVTKA0QXTO9g')
+part.p_type in ('Q1ph8mgrN7bTv4OLFx')
+part.p_type in ('iAZAbJZ867yj4e0NZLcxmfFG7', 'yPVhSlJF9R7bERNz', 'PPVisc3FrcHdsLb3ku3Q1m5R', 'G5FqLTSOSpZOTsOf')
+part.p_type in ('OdNwCInHLfvI2Ke0', '49ezjknVhYwDefEEyUV7FPI6', 'NWYata9xTC7KD71OHZqxB83', 'KcoCZHNXbxOFtsk3sB', 'dqKYcBsOzhk3JSZv')
+part.p_type in ('wy7ImCkT1bHptKUPBg1HMw', 'UJibSTyhaY43NB6SeJDsuR8PU', 'MdwbFjhoFm6vrGGg', 'vaYnssBoD8w9q0kjkZ', 'dm7307LQlv0ujSihzb')
+part.p_type in ('axRsnVBBddV9gnjb3')
+part.p_type in ('jnq9XyT3aXBGxiTlkH')
+part.p_type in ('MuEGXsyGftxoBth4g7sYizp', 'EkCLFdLipjbAzPM00Hg', 'l5tS9MYTmjvC2hDDgXP3')
+part.p_type in ('1kjiUCE5BBz10Cx8037Wwcm7', 'NJS80mjI4H26nNaTxvQXiD')
+part.p_type in ('YQgyxclhZRYpCUYMuefR1eQ', 'nI4OlEAp1ko8ApboY12n', 'W954VErYNmefPliHmKueC3nAx', 'SAdrd7awZADRJ4WM8vVjm')
+part.p_type in ('oSCxW1a8lRRfZi88tT', 'xYtpYDi54khZfY8bfPSP')
+part.p_type in ('5SPJwinJ1CVafJz3L9vw4er', 'bovt99V2i4oqfSTRI2', 'Qb4421hyWwDrfuJShFBRd1v6p', 'P673cM2CEDw42qGxn', 'MyTi75oiSYeGtM5aDTmh')
+part.p_type in ('pSdzObHOpHcEbqThOpevqtSxW')
+part.p_type in ('bKK29pfafuND7Twl2HyQLnHb')
+part.p_type in ('0YkVf2izVjFCUEkL26zB7No', 'limmbTqzOjQAdcRkhoFmPmTwq', 'p1ZjLWMcApjRxhQNWTsYDT1o')
+part.p_type in ('bf1PG3kB7SoAxA16Y', 'A000fehWSqoxvp6a')
+part.p_type in ('cFUrdBrSXWCZ3jl04Gv0uZNwa', 'ZMTpnQezcprUn85j', '0Hq8TTg4Z25jXAqvhQw2s', 'ww7CAA3Sdt6ZLi34Vb', 'MHLSR6tgBidjBMislUfBYp')
+part.p_type in ('ZREtHbCjMlE6997Af9X', 'icYzwrclW8Ryt9pD0InIIB', 's0ufmgtA4WczvqQDF1', 'GwZWuDD0f8WkcPXwswehhnJ', 'veUdCKQnikrnwDHV70Ejv8yx')
+part.p_type in ('LezaDHoxuboZwW0mHM', 'gl6nW2qoJSsaZmSO5c2A9vm', 'l6EnoBNERrwkMDMZCa39Md', 'TeXHCsVmk3hyF9X5Hn', 'bKK29pfafuND7Twl2HyQLnHb')
+part.p_type in ('YqDFUH74DtbX8YET59lpxFQLa', '0Z5COlxAulcv5xv5j1', 'Q1ph8mgrN7bTv4OLFx')
+part.p_type in ('PC2RJVamH3BqQuZ9xzoDKISU6')
+part.p_type in ('58LLLIPSGXOxgsyfo3Qm', '64XNJpZi38feUyOp18llvbdQ', 'LQTUytPhEVwQ0BXYn3ngez', 'qfxl4U3NJ5myZzifPOPliBYv')
+part.p_type in ('FNBFN6MyrTDzbyIqvU4q2g')
+part.p_type in ('aoz6CqYi2a4bXWQhaK')
+part.p_type in ('CC7Rqn81i2BMEkEYnxz03s', 'GaAjFyZuJxQuNnY3G2KYJv', 'dH6U2QaGUcivAe5q', 'ZamZAQNZuohLdJKdUBHU', '5L0OnKtVGE3nB6XF')
+part.p_type in ('LbEvZgQDvDaOOzwCmdmCR')
+part.p_type in ('YPAmgiuuajAQknYLSe9zZlxq')
+part.p_type in ('6i3ezabgMsyCfmKnCber', 'zRGqn9GWM8AT4dhjjgc', 'R3I1WwVnnHZRHudI2a', 'Ew1iCrSDlZagt3HpIwWG63')
+part.p_type in ('Aw9KtLNOjOh0BBx3', 'mSWpaPMr3llvMxlEGEt', 'PVBqvIKZURK4LYNVFv2hE')
+part.p_type in ('JX5uCAnzcLqjtBx5Y3KrLBw')
+part.p_type in ('vkjrf8Mk4noNJYzWBrilD', 'YPAmgiuuajAQknYLSe9zZlxq')
+part.p_type in ('OGmpiGdsGmi12uCh', 'zS6wkgctAbcg3w8QJH1l', 'o6HTes2p9lgH6Cd723K', 'E6b7G9EvgpYmQ0fSN7jS', '4QNbCLCumeW28pQa')
+part.p_type in ('PC2RJVamH3BqQuZ9xzoDKISU6')
+part.p_type in ('SJIyBYv3GCDL0lVA69ovhZ', '7gv0uj7UZC861lq2E', 'ZEU7q69dpbINVwvVlxAYhA', 'ncmUTcY1VoKeSO0tdRSdVjB', 'vPt4NFCIpOHtLbBnHKKIg4oMR')
+part.p_type in ('UP8l8qcKrxYA46QGx3GHiAPY', 'c4DqqnpTlXU8WAjqbV6HF6')

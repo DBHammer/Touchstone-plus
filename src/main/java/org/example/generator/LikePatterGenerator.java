@@ -9,7 +9,8 @@ public class LikePatterGenerator {
     TopoGraph topoGraph;
     List<LikeType> LikeTyps;
     char[] chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789".toCharArray();
-    char[] level = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".toCharArray();
+    //char[] level = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".toCharArray();
+    char[] level;
 
     public LikePatterGenerator(TopoGraph topoGraph, List<LikeType> likeTyps) {
         this.topoGraph = topoGraph;
@@ -17,6 +18,7 @@ public class LikePatterGenerator {
     }
 
     public String[] getLikeParas() {
+        getLevelCode();
         String[] likeParas = new String[topoGraph.getV()];
         HashSet<String> distinctLikeParasInBehindMatch = new HashSet<>();
         HashSet<String> distinctLikeParasInFrontMatch = new HashSet<>();
@@ -99,6 +101,13 @@ public class LikePatterGenerator {
         for (Integer child : children) {
             allNodeDepth[child] = curDepth + 1;
             findDepthInTree(child, allNodeDepth);
+        }
+    }
+
+    public void getLevelCode() {
+        level = new char[71];
+        for (int i = 180; i <= 250; i++) {
+            level[i - 180] = (char) i;
         }
     }
 }
