@@ -1,4 +1,4 @@
-# touchstone-plus
+# Touchstone-plus
 
 Touchstone-Plus is a supplementary version of Touchstone designed to address the insufficient support for matching operators.
 
