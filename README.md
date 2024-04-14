@@ -1,6 +1,6 @@
 # Touchstone-plus
 
-Touchstone-Plus is a supplementary version of Touchstone designed to address the insufficient support for matching operators.
+Touchstone-plus is a supplementary version of Touchstone designed to address the insufficient support for matching operators.
 
 ## Technical Report
 
