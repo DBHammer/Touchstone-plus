@@ -63,3 +63,5 @@ The specific parameters are shown below:
 -c, --execution result storage directory.
 -d, --directory where the simulated data is located.
 ```
+
+After the generation phase is completed, a script can be used to generate a simulated database.
