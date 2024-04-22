@@ -17,7 +17,8 @@ Touchstone-plus is a supplementary version of Touchstone designed to address the
 
  The configuration file path is ./conf/tool.json. Specifically, the configuration file tool.json is formatted to contain information such as database connection information and directory information.
 1. `databaseConnectorConfig`: Database connection information. It is the connection configuration information for connecting to the target database.
-2. `queriesDirectory`: The directory where the query is located refers to the query ready for simulation.
-3. `resultDirectory`: The execution result storage directory refers to the directory where the parsed database information is stored.
-4. `defaultSchemaName`: The default schema name of the database, this is due to the characteristics of Postgresql, you must specify the schema that belongs to, here fill in the default public is good.
+2. `inputDirectory`: The directory where the query is located refers to the query ready for simulation.
+3. `outputDirectory`: The execution result storage directory refers to the directory where the parsed database information is stored.
+4. `newsqlDirectory`: The default schema name of the database, this is due to the characteristics of Postgresql, you must specify the schema that belongs to, here fill in the default public is good.
+5. `dataDirectory`: The default schema name of the database, this is due to the characteristics of Postgresql, you must specify the schema that belongs to, here fill in the default public is good.
 ### Data Generation
