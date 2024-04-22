@@ -14,4 +14,6 @@ Touchstone-plus is a supplementary version of Touchstone designed to address the
 ### Computation
  The main task of computation is to extract table column information related to the input queries (including table names, column names, and cardinality of columns), as well as the cardinality of each query. Then, 
  based on this information, a Constraint Programming (CP) problem model is constructed, and the solver's results are output to a file.
+
+ The configuration file path is ./conf/tool.json.
 ### Data Generation
