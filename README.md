@@ -9,4 +9,4 @@ Touchstone-plus is a supplementary version of Touchstone designed to address the
 2. In Section 4, we give the proof for Theorem 1.
 
 ## Quick Start
-Comming soon....
+ Touchstone-plus's workflow is divided into two steps: computation and data generation, which can be executed directly using the given command line.
