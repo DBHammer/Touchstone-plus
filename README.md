@@ -15,5 +15,9 @@ Touchstone-plus is a supplementary version of Touchstone designed to address the
  The main task of computation is to extract table column information related to the input queries (including table names, column names, and cardinality of columns), as well as the cardinality of each query. Then, 
  based on this information, a Constraint Programming (CP) problem model is constructed, and the solver's results are output to a file.
 
- The configuration file path is ./conf/tool.json.
+ The configuration file path is ./conf/tool.json. Specifically, the configuration file tool.json is formatted to contain information such as database connection information and directory information.
+1. `databaseConnectorConfig`: Database connection information. It is the connection configuration information for connecting to the target database.
+2. `queriesDirectory`: The directory where the query is located refers to the query ready for simulation.
+3. `resultDirectory`: The execution result storage directory refers to the directory where the parsed database information is stored.
+4. `defaultSchemaName`: The default schema name of the database, this is due to the characteristics of Postgresql, you must specify the schema that belongs to, here fill in the default public is good.
 ### Data Generation
