@@ -47,7 +47,7 @@ java -jar Mirage-${version}.jar solve -c conf/tool.json -t ${thred number} -e ${
 The specific parameters are shown below:
 ```shell
 -t, --The number of threads used by the solver.
--e, --The maximum allowable error $\Epsilon$(corresponding to optimization method 2).
+-e, --The maximum allowable error $\Epsilon$ (corresponding to optimization method 2).
 -s, --The parameter $\rho$ for scaling the value range (corresponding to optimization method 2).
 ```
 ### Data Generation
