@@ -32,9 +32,10 @@ An example is shown below.
     "databasePwd": "mima123", //database password
     "databaseUser": "postgres" //database username
   },
-  "queriesDirectory": "conf/sql", //directory where the query is located
-  "resultDirectory": "result", //execution result storage directory
-  "defaultSchemaName": "public" //database default schema name
+  "inputDirectory": "conf/inputTest.txt", //directory where the query is located
+  "outputDirectory": "conf/output.txt", //execution result storage directory
+  "newsqlDirectory": "conf/newsql.txt", //directory where the simulated query is located
+  "dataDirectory": "conf/data.txt", //directory where the simulated query is located
 }
 ```
 ### Data Generation
