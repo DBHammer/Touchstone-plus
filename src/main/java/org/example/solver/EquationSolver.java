@@ -28,9 +28,11 @@ public class EquationSolver implements Callable<Integer> {
     private String configPath;
     @CommandLine.Option(names = {"-t", "--thread_num"}, required = true, description = "the number of thread")
     private int nbModels;
-    @CommandLine.Option(names = {"-g", "--group_size"}, description = "group size of the vector")
+    @CommandLine.Option(names = {"-g", "--group_size"}, description = "group size of the vector", defaultValue = "1")
     int groupSize;
-    @CommandLine.Option(names = {"-e", "--para_error"}, description = "error of cutting the domain")
+    @CommandLine.Option(names = {"-s", "--scale_error"}, description = "error of cutting the domain")
+    double scale;
+    @CommandLine.Option(names = {"-e", "--error"}, description = "error of computation")
     double error;
     private String dataPath;
     private static String colName;
@@ -50,7 +52,7 @@ public class EquationSolver implements Callable<Integer> {
         List<LikeType> LikeTypes = new ArrayList<>();
         getInTypeAndLikeType(InTypes, LikeTypes, eachLine);
         HashSet<String> allDistinctParas = getDistinctParasInIntypes(eachLine);
-        BigDecimal denominator = getDenominator(InTypes, LikeTypes, error);
+        BigDecimal denominator = getDenominator(InTypes, LikeTypes, scale);
         List<String> allInParasValueUpperBound = getInParaValueUpperBound(eachLine, InTypes, allDistinctParas, getTableSize(dbConnector));//todo
         List<String> allLikeParasValueUpperBound = getLikeParaValueUpperBound(LikeTypes);
         List<String> allParasValueUpperBound = new ArrayList<>(allInParasValueUpperBound);
@@ -287,13 +289,10 @@ public class EquationSolver implements Callable<Integer> {
 //            model.arithm(tmp, "=", intRows).post();
 
 //            model.sum(vectorMuls.get(i), "=", intRows).post();
-
-            int up = (int) Math.floor(1.05 * intRows);
-            int down = (int) Math.ceil(0.95 * intRows);
-            model.arithm(tmp, "<=", (int) (Math.floor(1.05 * intRows))).post();
-            model.arithm(tmp, ">=", (int) (Math.ceil(0.95 * intRows))).post();
-            model.sum(vectorMuls.get(i), "<=", (int) (Math.floor(1.05 * intRows))).post();
-            model.sum(vectorMuls.get(i), ">=", (int) (Math.ceil(0.95 * intRows))).post();
+            model.arithm(tmp, "<=", (int) (Math.floor((1 + error) * intRows))).post();
+            model.arithm(tmp, ">=", (int) (Math.ceil((1 - error) * intRows))).post();
+//            model.sum(vectorMuls.get(i), "<=", (int) (Math.floor((1 + error) * intRows))).post();
+//            model.sum(vectorMuls.get(i), ">=", (int) (Math.ceil((1 - error) * intRows))).post();
         }
         //建模like中的包含和互斥关系
         //思路是使用层序遍历的方法，对每一层的同父节点添加互斥约束，父节点与子节点添加包含约束

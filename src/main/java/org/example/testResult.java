@@ -17,8 +17,8 @@ import java.util.stream.Collectors;
 
 public class testResult {
 
-    public static String inputPath = "D:\\eclipse-workspace\\Touchstone\\data\\newSql.txt";
-    public static String originPath = "D:\\eclipse-workspace\\Touchstone\\conf\\inputTest.txt";
+    public static String inputPath = "D:\\eclipse-workspace\\multiStirngMatching\\conf\\newSql.txt";
+    public static String originPath = "D:\\eclipse-workspace\\multiStirngMatching\\conf\\inputTest.txt";
     public static String originLikePath = "D:\\eclipse-workspace\\multiStirngMatching\\conf\\inputLikeTest.txt";
     public static String sqlHead = "select count(*) from part where ";
     public static String sqlHeadLike = "select count(*) from part where ";
@@ -53,9 +53,9 @@ public class testResult {
 
     public static void testAll() throws MainException, SQLException, IOException, ExecutionException, InterruptedException {
         //System.out.println((int) (Math.round(0.95 * 73)));
-        DatabaseConnectorConfig config1 = new DatabaseConnectorConfig("wqs97.click", "5432", "postgres", "Biui1227..", "tpcdsonecolumn");
+        DatabaseConnectorConfig config1 = new DatabaseConnectorConfig("wqs97.click", "5432", "postgres", "Biui1227..", "tpchonecolumn");
         DbConnector dbConnector1 = new PgConnector(config1);
-        DatabaseConnectorConfig config2 = new DatabaseConnectorConfig("wqs97.click", "5432", "postgres", "Biui1227..", "tpcds");
+        DatabaseConnectorConfig config2 = new DatabaseConnectorConfig("wqs97.click", "5432", "postgres", "Biui1227..", "tpch1");
         DbConnector dbConnector2 = new PgConnector(config2);
         List<String> sqls = getEachLine(inputPath);
         List<String> sqls2 = getEachLine(originPath);
@@ -66,8 +66,8 @@ public class testResult {
         }
         AtomicInteger sum = new AtomicInteger(0);
         new ForkJoinPool(8).submit(() -> new2Olds.parallelStream().forEach(eachNew2Old -> {
-            String sql = sqlHead2 + eachNew2Old.getA();
-            String sql2 = sqlHead2 + eachNew2Old.getB().split("=")[0].trim();
+            String sql = sqlHead + eachNew2Old.getA();
+            String sql2 = sqlHead + eachNew2Old.getB().split("=")[0].trim();
             double result = 0;
             try {
                 result = dbConnector1.getSqlResult(sql);
@@ -95,7 +95,7 @@ public class testResult {
             }
 
         })).get();
-        System.out.println((double) sum.get() / 100000/20);
+        System.out.println((double) sum.get() / 100000/100);
     }
 
     public static List<String> getEachLine(String intputPath) {
