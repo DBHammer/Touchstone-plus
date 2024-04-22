@@ -38,4 +38,9 @@ An example is shown below.
   "dataDirectory": "conf/data.txt", //directory where the simulated query is located
 }
 ```
+
+The command for executing the computation phase task via the command line is
+```bash
+java -jar Mirage-${version}.jar solve -c conf/tool.json -t ${thred number} -e ${comoutation error allowed} -s ${scale error}
+```
 ### Data Generation
