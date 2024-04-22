@@ -41,7 +41,7 @@ An example is shown below.
 
 The command for executing the computation phase task via the command line is
 ```bash
-java -jar Mirage-${version}.jar solve -c conf/tool.json -t ${thred number} -e ${comoutation error allowed} -s ${scale error}
+java -jar multiStringMatching-${version}.jar solve -c conf/tool.json -t ${thred number} -e ${comoutation error allowed} -s ${scale error}
 ```
 
 The specific parameters are shown below:
