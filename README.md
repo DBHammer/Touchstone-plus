@@ -51,3 +51,15 @@ The specific parameters are shown below:
 -s, --The parameter $\rho$ for scaling the value range (corresponding to optimization method 2).
 ```
 ### Data Generation
+The main task of the data generation phase is to generate simulated data and simulated queries based on the results obtained through solver computation.
+
+The command for executing the data generation phase task via the command line is
+```bash
+java -jar multiStringMatching-${version}.jar generate -c ${outputDictionary} -d ${dataDictionary}$
+```
+
+The specific parameters are shown below:
+```shell
+-c, --execution result storage directory.
+-d, --directory where the simulated data is located.
+```
