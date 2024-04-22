@@ -21,4 +21,20 @@ Touchstone-plus is a supplementary version of Touchstone designed to address the
 3. `outputDirectory`: The directory for storing parsed results and solver computation results.
 4. `newsqlDirectory`: The directory of simulated queries obtained during the generation phase.
 5. `dataDirectory`: The directory of simulated data obtained during the generation phase.
+
+An example is shown below.
+```json lines
+{
+  "databaseConnectorConfig": {
+    "databaseIp": "127.0.0.1", //database IP
+    "databaseName": "tpch1", //database name
+    "databasePort": "5432", //database port
+    "databasePwd": "mima123", //database password
+    "databaseUser": "postgres" //database username
+  },
+  "queriesDirectory": "conf/sql", //directory where the query is located
+  "resultDirectory": "result", //execution result storage directory
+  "defaultSchemaName": "public" //database default schema name
+}
+```
 ### Data Generation
