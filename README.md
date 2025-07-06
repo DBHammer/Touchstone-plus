@@ -2,6 +2,19 @@
 
 Touchstone-plus is a supplementary version of Touchstone designed to address the insufficient support for matching operators.
 
+## Citation
+Please cite our papers, if you find this work useful or use it in your paper as a baseline.
+```
+@inproceedings{li2024touchstone+,
+  title={Touchstone+: Query Aware Database Generation for Match Operators},
+  author={Li, Hao and Wang, Qingshuai and Hu, Zirui and Huang, Xuhua and Ni, Lyu and Zhang, Rong and Cai, Peng and Zhou, Xuan and Xu, Quanqing},
+  booktitle={International Conference on Database Systems for Advanced Applications},
+  pages={266--282},
+  year={2024},
+  organization={Springer}
+}
+```
+
 ## Technical Report
 
 [Here](./technical-report.pdf) is our technical report, which is a extention of our submitted paper.
